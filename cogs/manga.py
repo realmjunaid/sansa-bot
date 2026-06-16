@@ -215,6 +215,15 @@ class Manga(commands.Cog):
         await interaction.followup.send(embed=embed)
         log.info("[Manga] /manga command completed successfully")
 
+    async def fetch_random_manga(self):
+        """Used by auto.py for hourly manga posts. Returns media dict or None."""
+        for _ in range(5):
+            page = random.randint(1, 50)
+            data = await self.anilist_request(RANDOM_MANGA_QUERY, {"page": page})
+            if data and data.get("data") and data["data"].get("Page") and data["data"]["Page"].get("media"):
+                return data["data"]["Page"]["media"][0]
+        return None
+
 
 async def setup(bot):
     await bot.add_cog(Manga(bot))

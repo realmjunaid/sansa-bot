@@ -14,6 +14,8 @@ BOT_TOKEN = os.getenv("BOT_TOKEN", "YOUR_BOT_TOKEN_HERE")
 # ── Channel IDs ────────────────────────────
 WAIFU_CHANNEL_ID = int(os.getenv("WAIFU_CHANNEL_ID", 0))   # #waifu-zone
 ANIME_CHANNEL_ID = int(os.getenv("ANIME_CHANNEL_ID", 0))   # #anime-zone
+MANGA_CHANNEL_ID = int(os.getenv("MANGA_CHANNEL_ID", 0))   # #manga-zone (auto)
+MEMES_CHANNEL_ID = int(os.getenv("MEMES_CHANNEL_ID", 0))   # #memes-zone (auto)
 CHAT_CHANNEL_ID  = int(os.getenv("CHAT_CHANNEL_ID",  0))   # #anime-chat
 HANIME_CHANNEL_ID = int(os.getenv("HANIME_CHANNEL_ID", 0))   # #hanime (auto NSFW posts + commands)
 SAVE_CHANNEL_ID = int(os.getenv("SAVE_CHANNEL_ID", 0))   # #save (❤️ Save / ❌ Unsave feature)

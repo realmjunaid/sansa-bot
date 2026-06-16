@@ -114,6 +114,8 @@ class Utils(commands.Cog):
             value=(
                 "**#waifu-zone** — Waifu image every hour\n"
                 "**#anime-zone** — Random anime every hour\n"
+                "**#manga-zone** — Random manga every hour\n"
+                "**#memes-zone** — Anime meme every hour\n"
                 "**#hanime** — NSFW hentai every hour (12 images per post) + /hanime commands\n"
                 "**#hdad** — hentaidad.com hentai every hour (12 images per post)\n"
                 "**#sakuh** — Sakuhentai images every hour (15 images of the same character)"
@@ -258,6 +260,8 @@ class Utils(commands.Cog):
         waifu_count = auto_cog.waifu_today if auto_cog else 0
         anime_count = auto_cog.anime_today if auto_cog else 0
         hzone_count = auto_cog.hzone_today if auto_cog else 0
+        manga_count = auto_cog.manga_today if auto_cog else 0
+        memes_count = auto_cog.memes_today if auto_cog else 0
 
         embed = discord.Embed(
             title=f"📊 {BOT_NAME} Bot Status",
@@ -271,6 +275,8 @@ class Utils(commands.Cog):
         embed.add_field(name="🌸 Waifu Today", value=f"{waifu_count}/24", inline=True)
         embed.add_field(name="🎌 Anime Today", value=f"{anime_count}/24", inline=True)
         embed.add_field(name="🔞 Hzone Today", value=f"{hzone_count}/24", inline=True)
+        embed.add_field(name="📚 Manga Today", value=f"{manga_count}/24", inline=True)
+        embed.add_field(name="😂 Memes Today", value=f"{memes_count}/24", inline=True)
         embed.add_field(name="🐍 Python", value=platform.python_version(), inline=True)
         embed.add_field(name="📚 discord.py", value=discord.__version__, inline=True)
         embed.set_footer(text="Sansa Bot 🌸")
@@ -305,6 +311,11 @@ class Utils(commands.Cog):
             value="**Every hour** in #anime-zone",
             inline=False
         )
+        embed.add_field(
+            name="📚 Manga + 😂 Memes",
+            value="**Every hour** (if #manga-zone / #memes-zone set)",
+            inline=False
+        )
         embed.set_footer(text="Sansa Bot 🌸 • UTC Time")
         await interaction.response.send_message(embed=embed)
 
@@ -319,6 +330,8 @@ class Utils(commands.Cog):
         anime_count = auto_cog.anime_today if auto_cog else 0
         hanime_count = auto_cog.hanime_today if auto_cog else 0
         hzone_count = auto_cog.hzone_today if auto_cog else 0
+        manga_count = auto_cog.manga_today if auto_cog else 0
+        memes_count = auto_cog.memes_today if auto_cog else 0
 
         embed = discord.Embed(
             title="📈 Today's Auto Post Count",
@@ -343,6 +356,16 @@ class Utils(commands.Cog):
         embed.add_field(
             name="🔞 Hzone Posts (NSFW - hentaidad)",
             value=f"**{hzone_count}/24** (12 images each)\n{'▓' * hzone_count}{'░' * (24 - hzone_count)}",
+            inline=False
+        )
+        embed.add_field(
+            name="📚 Manga Posts",
+            value=f"**{manga_count}/24**\n{'▓' * manga_count}{'░' * (24 - manga_count)}",
+            inline=False
+        )
+        embed.add_field(
+            name="😂 Memes Posts",
+            value=f"**{memes_count}/24**\n{'▓' * memes_count}{'░' * (24 - memes_count)}",
             inline=False
         )
         embed.set_footer(text="Sansa Bot 🌸 • Resets at midnight UTC")

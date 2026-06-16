@@ -15,7 +15,8 @@ from datetime import datetime
 from config import (
     WAIFU_CHANNEL_ID, ANIME_CHANNEL_ID, HANIME_CHANNEL_ID,
     HDAD_CHANNEL_ID, SAKUH_CHANNEL_ID, LUCI_CHANNEL_ID,
-    WAIFU_TAGS, COLOR_WAIFU, COLOR_ANIME
+    MANGA_CHANNEL_ID, MEMES_CHANNEL_ID,
+    WAIFU_TAGS, COLOR_WAIFU, COLOR_ANIME, COLOR_MANGA, COLOR_MEMES
 )
 
 log = logging.getLogger("SansaBot.Auto")
@@ -102,6 +103,8 @@ class Auto(commands.Cog):
         self.anime_count_today = 0
         self.hanime_count_today = 0
         self.hzone_count_today = 0
+        self.manga_count_today = 0
+        self.memes_count_today = 0
         self.last_reset = datetime.utcnow().date()
 
         self.auto_waifu.start()
@@ -110,6 +113,8 @@ class Auto(commands.Cog):
         self.auto_hdad.start()
         self.auto_sakuh.start()
         self.auto_luci.start()
+        self.auto_manga.start()
+        self.auto_memes.start()
         log.info("✅ Auto Cog loaded")
 
     def cog_unload(self):
@@ -119,6 +124,8 @@ class Auto(commands.Cog):
         self.auto_hdad.cancel()
         self.auto_sakuh.cancel()
         self.auto_luci.cancel()
+        self.auto_manga.cancel()
+        self.auto_memes.cancel()
 
     # ── Daily Count Reset ──────────────────
     def check_reset(self):
@@ -128,6 +135,8 @@ class Auto(commands.Cog):
             self.anime_count_today = 0
             self.hanime_count_today = 0
             self.hzone_count_today = 0
+            self.manga_count_today = 0
+            self.memes_count_today = 0
             self.last_reset = today
 
     # ── Waifu Fetch (Safebooru for metadata + fallback) ───────────────────────
@@ -529,6 +538,85 @@ class Auto(commands.Cog):
     async def before_auto_luci(self):
         await self.bot.wait_until_ready()
 
+    # ── Auto Manga (প্রতি ঘণ্টায়) ─────────
+    @tasks.loop(hours=1)
+    async def auto_manga(self):
+        await self.bot.wait_until_ready()
+        self.check_reset()
+
+        channel = self.bot.get_channel(MANGA_CHANNEL_ID)
+        if not channel:
+            return
+
+        manga_cog = self.bot.get_cog("Manga")
+        if not manga_cog:
+            return
+
+        manga = await manga_cog.fetch_random_manga()
+        if not manga:
+            return
+
+        self.manga_count_today += 1
+
+        desc = manga.get("description", "No description available.")
+        if desc and len(desc) > 300:
+            desc = desc[:300] + "..."
+
+        genres = ", ".join(manga.get("genres", [])[:4]) or "Unknown"
+        title_en = manga["title"].get("english") or manga["title"].get("romaji", "Unknown")
+        title_jp = manga["title"].get("romaji", "")
+
+        embed = discord.Embed(
+            title=f"📚 {title_en}",
+            description=f"*{title_jp}*\n\n{desc}",
+            color=COLOR_MANGA,
+            url=manga.get("siteUrl", ""),
+            timestamp=datetime.utcnow()
+        )
+        embed.add_field(name="⭐ Score", value=f"{manga.get('averageScore', 'N/A')}/100", inline=True)
+        embed.add_field(name="📖 Chapters", value=str(manga.get("chapters", "N/A")), inline=True)
+        embed.add_field(name="📦 Volumes", value=str(manga.get("volumes", "N/A")), inline=True)
+        embed.add_field(name="📅 Year", value=str(manga.get("startDate", {}).get("year", "N/A")), inline=True)
+        embed.add_field(name="🎭 Genres", value=genres, inline=False)
+        embed.set_image(url=manga["coverImage"]["extraLarge"])
+        embed.set_footer(text="Sansa Bot • Auto Manga")
+
+        await channel.send(embed=embed)
+        log.info(f"✅ Auto manga posted ({self.manga_count_today}/24)")
+
+    @auto_manga.before_loop
+    async def before_auto_manga(self):
+        await self.bot.wait_until_ready()
+
+    # ── Auto Memes (প্রতি ঘণ্টায়) ─────────
+    @tasks.loop(hours=1)
+    async def auto_memes(self):
+        await self.bot.wait_until_ready()
+        self.check_reset()
+
+        channel = self.bot.get_channel(MEMES_CHANNEL_ID)
+        if not channel:
+            return
+
+        memes_cog = self.bot.get_cog("Memes")
+        if not memes_cog:
+            return
+
+        meme = await memes_cog.fetch_meme("hot")
+        if not meme:
+            return
+
+        self.memes_count_today += 1
+
+        embed = memes_cog.build_embed(meme, "🔥 Auto Meme")
+        embed.set_footer(text=f"Sansa Bot • Auto Memes • {self.memes_count_today}/24")
+        await channel.send(embed=embed)
+        log.info(f"✅ Auto memes posted ({self.memes_count_today}/24)")
+
+    @auto_memes.before_loop
+    async def before_auto_memes(self):
+        await self.bot.wait_until_ready()
+
     @property
     def waifu_today(self):
         return self.waifu_count_today
@@ -544,6 +632,14 @@ class Auto(commands.Cog):
     @property
     def hzone_today(self):
         return self.hzone_count_today
+
+    @property
+    def manga_today(self):
+        return self.manga_count_today
+
+    @property
+    def memes_today(self):
+        return self.memes_count_today
 
 
 async def setup(bot):

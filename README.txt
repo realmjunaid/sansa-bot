@@ -110,6 +110,8 @@ sansa-bot/
 
 #waifu-zone  → শুধু auto waifu image (প্রতি ঘণ্টায়)
 #anime-zone  → শুধু auto anime details (প্রতি ঘণ্টায় - 24/day via MyAnimeList/Jikan)
+#manga-zone  → auto manga (প্রতি ঘণ্টায়)
+#memes-zone  → auto memes (প্রতি ঘণ্টায়)
 #anime-chat  → সব commands এখানে কাজ করে
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
