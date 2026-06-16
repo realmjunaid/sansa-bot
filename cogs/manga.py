@@ -62,11 +62,18 @@ query ($page: Int) {
 class Manga(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        log.info("✅ Manga Cog loaded")
+        log.info(f"✅ Manga Cog loaded (CHAT_CHANNEL_ID={CHAT_CHANNEL_ID})")
 
     # ── Channel Check ──────────────────────
     async def check_channel(self, interaction: discord.Interaction) -> bool:
+        if CHAT_CHANNEL_ID == 0:
+            log.error("[Manga] CHAT_CHANNEL_ID is 0 (not set in .env)!")
+            await interaction.response.send_message("❌ Bot misconfigured: CHAT_CHANNEL_ID not set in .env", ephemeral=True)
+            return False
         if interaction.channel_id != CHAT_CHANNEL_ID:
+            ch = interaction.guild.get_channel(CHAT_CHANNEL_ID) if interaction.guild else None
+            ch_name = ch.name if ch else "anime-chat"
+            log.warning(f"[Manga] Blocked /manga from #{getattr(interaction.channel, 'name', 'unknown')} (need #{ch_name} id={CHAT_CHANNEL_ID})")
             embed = discord.Embed(
                 description=f"❌ This command only works in <#{CHAT_CHANNEL_ID}>!",
                 color=COLOR_ERROR
@@ -77,17 +84,24 @@ class Manga(commands.Cog):
 
     # ── AniList Request ────────────────────
     async def anilist_request(self, query: str, variables: dict = {}):
+        timeout = aiohttp.ClientTimeout(total=12)
         try:
-            async with aiohttp.ClientSession() as session:
+            async with aiohttp.ClientSession(timeout=timeout) as session:
                 async with session.post(
                     "https://graphql.anilist.co",
                     json={"query": query, "variables": variables},
-                    headers={"Content-Type": "application/json"}
+                    headers={"Content-Type": "application/json", "User-Agent": "SansaBot/1.0"}
                 ) as resp:
+                    log.info(f"[Manga] AniList POST status={resp.status}")
                     if resp.status == 200:
-                        return await resp.json()
+                        data = await resp.json()
+                        log.info(f"[Manga] AniList response keys: {list(data.keys()) if isinstance(data, dict) else 'not-dict'}")
+                        return data
+                    else:
+                        text = await resp.text()
+                        log.warning(f"[Manga] AniList bad status {resp.status}: {text[:200]}")
         except Exception as e:
-            log.error(f"AniList request error: {e}")
+            log.error(f"[Manga] AniList request error: {e}")
         return None
 
     # ── /manga ─────────────────────────────
@@ -111,6 +125,7 @@ class Manga(commands.Cog):
                 return
 
             manga = data["data"]["Media"]
+            log.info(f"[Manga] /manga search hit: {title}")
 
             desc = manga.get("description", "No description available.")
             if desc and len(desc) > 350:
@@ -158,18 +173,22 @@ class Manga(commands.Cog):
             embed.set_footer(text="Sansa Bot 🌸 • Powered by AniList")
 
         else:
-            # Random manga
-            page = random.randint(1, 30)
-            data = await self.anilist_request(RANDOM_MANGA_QUERY, {"page": page})
-            if not data:
+            # Random manga (try up to 5 pages)
+            manga = None
+            for _ in range(5):
+                page = random.randint(1, 50)
+                data = await self.anilist_request(RANDOM_MANGA_QUERY, {"page": page})
+                if data and data.get("data") and data["data"].get("Page") and data["data"]["Page"].get("media"):
+                    manga = data["data"]["Page"]["media"][0]
+                    break
+            if not manga:
                 embed = discord.Embed(
-                    description="❌ Failed to fetch manga. Please try again.",
+                    description="❌ Failed to fetch manga (AniList down or empty). Please try again.",
                     color=COLOR_ERROR
                 )
                 await interaction.followup.send(embed=embed)
+                log.warning("[Manga] Random manga failed after 5 attempts")
                 return
-
-            manga = data["data"]["Page"]["media"][0]
 
             desc = manga.get("description", "No description.")
             if desc and len(desc) > 350:
@@ -194,7 +213,9 @@ class Manga(commands.Cog):
             embed.set_footer(text="Sansa Bot 🌸 • Powered by AniList")
 
         await interaction.followup.send(embed=embed)
+        log.info("[Manga] /manga command completed successfully")
 
 
 async def setup(bot):
     await bot.add_cog(Manga(bot))
+    log.info("✅ Manga Cog setup complete (AniList GraphQL with retries)")

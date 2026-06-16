@@ -1,6 +1,6 @@
 # ============================================
 #   Sansa Bot — Utils Cog
-#   Commands: /help, /ping, /status, /schedule, /count
+#   Commands: /help, /commands, /ping, /status, /schedule, /count
 # ============================================
 
 import discord
@@ -100,6 +100,7 @@ class Utils(commands.Cog):
             name="⚙️ Utility Commands",
             value=(
                 "`/help` — This list\n"
+                "`/commands` — Live list of all slash commands (from tree)\n"
                 "`/ping` — Bot latency\n"
                 "`/status` — Bot status\n"
                 "`/schedule` — Next auto post countdown\n"
@@ -134,6 +135,80 @@ class Utils(commands.Cog):
 
         embed.set_footer(text=f"Sansa Bot v{BOT_VERSION} 🌸 • Made by {BOT_AUTHOR}")
         await interaction.response.send_message(embed=embed)
+
+    # ── Category map for grouping live commands (matches /help sections) ──
+    CATEGORY_MAP = {
+        "Waifu": "🌸 Waifu Commands",
+        "Anime": "🎌 Anime Commands",
+        "Manga": "📚 Manga Commands",
+        "Memes": "😂 Memes Commands",
+        "Fun": "🎉 Fun Commands",
+        "Utils": "⚙️ Utility Commands",
+        "Hanime": "🔞 NSFW Commands",
+        "Hentaidad": "🔞 NSFW Commands",
+        "Sakuh": "🔞 NSFW Commands",
+        "Luci": "🔞 NSFW Commands",
+    }
+
+    def _format_command(self, cmd: app_commands.AppCommand) -> str:
+        """Format a single AppCommand with params and choices."""
+        name = cmd.name
+        desc = cmd.description or "No description"
+        parts = []
+        for opt in cmd.options or []:
+            p = f"<{opt.name}>" if opt.required else f"[{opt.name}]"
+            if opt.choices:
+                ch = "|".join(c.value for c in opt.choices)
+                p += f" ({ch})"
+            parts.append(p)
+        param_str = " " + " ".join(parts) if parts else ""
+        return f"`/{name}{param_str}` — {desc}"
+
+    # ── /commands (live tree introspection) ──────────────────────────────
+    @app_commands.command(name="commands", description="📜 Show all slash commands (live from tree)")
+    async def commands(self, interaction: discord.Interaction):
+        if not await self.check_channel(interaction):
+            return
+
+        await interaction.response.defer()
+
+        tree_cmds = self.bot.tree.get_commands()
+        groups: dict[str, list[str]] = {}
+
+        for cmd in tree_cmds:
+            if not isinstance(cmd, app_commands.AppCommand):
+                continue
+            cog_name = cmd.binding.__class__.__name__ if cmd.binding else "Global"
+            cat = self.CATEGORY_MAP.get(cog_name, f"Other ({cog_name})")
+            if cat not in groups:
+                groups[cat] = []
+            groups[cat].append(self._format_command(cmd))
+
+        embed = discord.Embed(
+            title="📜 Sansa Bot — Live Command List",
+            description="Generated from bot.tree at runtime. No manual list.",
+            color=COLOR_UTIL
+        )
+
+        # Preserve logical order matching /help
+        ordered_cats = [
+            "🌸 Waifu Commands",
+            "🎌 Anime Commands",
+            "📚 Manga Commands",
+            "😂 Memes Commands",
+            "🎉 Fun Commands",
+            "⚙️ Utility Commands",
+            "🔞 NSFW Commands",
+        ]
+
+        for cat in ordered_cats:
+            if cat in groups and groups[cat]:
+                embed.add_field(name=cat, value="\n".join(groups[cat]), inline=False)
+
+        embed.set_footer(
+            text="Channel restrictions still apply. Use /help for friendly docs + auto features."
+        )
+        await interaction.followup.send(embed=embed)
 
     # ── /ping ──────────────────────────────
     @app_commands.command(name="ping", description="🏓 Show bot latency")
