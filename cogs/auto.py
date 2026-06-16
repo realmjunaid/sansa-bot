@@ -259,15 +259,19 @@ class Auto(commands.Cog):
 
         channel = self.bot.get_channel(WAIFU_CHANNEL_ID)
         if not channel:
-            log.error("❌ Waifu channel not found!")
+            log.error(f"❌ Waifu channel not found! WAIFU_CHANNEL_ID={WAIFU_CHANNEL_ID} (0 means not set in .env)")
             return
+        log.info(f"✅ Waifu channel resolved: #{channel.name} ({WAIFU_CHANNEL_ID})")
 
         waifu_cog = self.bot.get_cog("Waifu")
         if not waifu_cog:
+            log.error("❌ Waifu cog not found! (cogs.waifu not loaded or class name mismatch)")
             return
 
+        log.info("⏳ Auto waifu: calling fetch_waifu_images...")
         images = await waifu_cog.fetch_waifu_images(count=15)
         if not images:
+            log.warning("⚠️ Auto waifu: fetch returned 0 images")
             return
 
         self.waifu_count_today += 1

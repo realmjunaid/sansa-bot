@@ -4,6 +4,7 @@ from discord import app_commands
 import aiohttp
 import random
 import logging
+from config import COLOR_WAIFU
 
 log = logging.getLogger("SansaBot.Waifu")
 
@@ -22,6 +23,7 @@ class Waifu(commands.Cog):
                     if resp.status == 200:
                         data = await resp.json()
                         posts = data if isinstance(data, list) else data.get("post", []) if isinstance(data, dict) else []
+                        log.info(f"[Waifu] Safebooru (sfw) returned {len(posts)} posts")
                         random.shuffle(posts)
                         for post in posts:
                             image_url = post.get("file_url") or post.get("sample_url")
@@ -29,8 +31,14 @@ class Waifu(commands.Cog):
                                 images.append({"url": image_url})
                             if len(images) >= count:
                                 break
+                    else:
+                        log.warning(f"[Waifu] Safebooru sfw bad status: {resp.status}")
         except Exception as e:
-            log.warning(f"Safebooru waifu batch failed: {e}")
+            log.warning(f"[Waifu] Safebooru waifu batch failed: {e}")
+
+        if len(images) >= count:
+            log.info(f"[Waifu] Returning {len(images)} sfw images (mostly Safebooru)")
+            return images[:count]
 
         fallbacks = [
             "https://nekos.best/api/v2/neko",
@@ -54,8 +62,10 @@ class Waifu(commands.Cog):
                                 url = data.get("link")
                             if url and not any(i["url"] == url for i in images):
                                 images.append({"url": url})
-            except Exception:
+            except Exception as e:
+                log.debug(f"[Waifu] fallback attempt err: {e}")
                 continue
+        log.info(f"[Waifu] Returning {len(images)} images after fallbacks")
         return images[:count]
 
     async def fetch_ecchi_waifu_images(self, count: int = 15):
@@ -69,6 +79,7 @@ class Waifu(commands.Cog):
                     if resp.status == 200:
                         data = await resp.json()
                         posts = data if isinstance(data, list) else data.get("post", []) if isinstance(data, dict) else []
+                        log.info(f"[Waifu] Safebooru (ecchi) returned {len(posts)} posts")
                         random.shuffle(posts)
                         for post in posts:
                             image_url = post.get("file_url") or post.get("sample_url")
@@ -76,8 +87,10 @@ class Waifu(commands.Cog):
                                 images.append({"url": image_url})
                             if len(images) >= count:
                                 break
+                    else:
+                        log.warning(f"[Waifu] Safebooru ecchi bad status: {resp.status}")
         except Exception as e:
-            log.warning(f"Safebooru ecchi batch failed: {e}")
+            log.warning(f"[Waifu] Safebooru ecchi batch failed: {e}")
 
         while len(images) < count:
             more = await self.fetch_waifu_images(count - len(images))
@@ -87,6 +100,7 @@ class Waifu(commands.Cog):
                 if not any(i["url"] == m["url"] for i in images):
                     images.append(m)
             break
+        log.info(f"[Waifu] Returning {len(images)} ecchi images")
         return images[:count]
 
     @app_commands.command(name="image", description="Random waifu image")
@@ -98,6 +112,7 @@ class Waifu(commands.Cog):
         embed = discord.Embed(color=0xFF69B4)
         embed.set_image(url=images[0]["url"])
         await interaction.response.send_message(embed=embed)
+        log.info(f"[Waifu] /image posted")
 
     @app_commands.command(name="waifu", description="Random ecchi waifu images (15)")
     async def waifu_cmd(self, interaction: discord.Interaction):
@@ -110,6 +125,7 @@ class Waifu(commands.Cog):
             e = discord.Embed(color=0xFF69B4)
             e.set_image(url=img["url"])
             await interaction.followup.send(embed=e)
+        log.info(f"[Waifu] /waifu posted {len(images)} images")
 
     @app_commands.command(name="tag", description="Get waifu image by tag")
     @app_commands.describe(name="Tag like maid, school, bikini etc")
@@ -138,8 +154,10 @@ class Waifu(commands.Cog):
             embed = discord.Embed(color=0xFF69B4)
             embed.set_image(url=images[0]["url"])
             await interaction.followup.send(embed=embed)
+            log.info(f"[Waifu] /tag {name} posted")
         else:
             await interaction.followup.send("❌ No image found", ephemeral=True)
 
 async def setup(bot):
     await bot.add_cog(Waifu(bot))
+    log.info("✅ Waifu Cog loaded (fetch_waifu_images + /image /waifu /tag ready)")
