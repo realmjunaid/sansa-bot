@@ -51,7 +51,8 @@ class Utils(commands.Cog):
                 "`/anime <title>` — Specific anime details\n"
                 "`/character <name>` — Character details + image\n"
                 "`/top` — Top 10 Anime (MyAnimeList)\n"
-                "`/season` — Current season anime list"
+                "`/season` — Current season anime list\n"
+                "`/watchtime <title>` — Total watch time calculator"
             ),
             inline=False
         )
@@ -61,6 +62,21 @@ class Utils(commands.Cog):
             value=(
                 "`/manga` — Random manga details\n"
                 "`/manga <title>` — Specific manga details"
+            ),
+            inline=False
+        )
+
+        embed.add_field(
+            name="📡 Episode Alerts",
+            value=(
+                "`/epalert <anime>` — Track for episode reminders\n"
+                "`/epremove <anime>` — Stop tracking\n"
+                "`/alertlist` — Your tracked list\n"
+                "`/myanime` — Detailed dashboard\n"
+                "`/nextrelease` — Upcoming countdowns\n"
+                "`/animecalendar` — Weekly schedule\n"
+                "`/weeklyanime` — Last 7 days releases\n"
+                "`/trendinganime` — Current top 10"
             ),
             inline=False
         )
