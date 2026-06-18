@@ -11,7 +11,7 @@ import logging
 from datetime import datetime
 from config import (
     BOT_TOKEN, BOT_PREFIX, BOT_NAME, BOT_VERSION,
-    CHAT_CHANNEL_ID, ANIME_CHANNEL_ID,
+    CHAT_CHANNEL_ID,
     MANGA_CHANNEL_ID, ANIME_UPDATES_CHANNEL_ID, SAVE_CHANNEL_ID, COLOR_ERROR
 )
 
@@ -54,12 +54,8 @@ COGS = [
 def is_chat_channel(interaction: discord.Interaction) -> bool:
     return interaction.channel_id == CHAT_CHANNEL_ID
 
-def is_anime_channel(interaction: discord.Interaction) -> bool:
-    return interaction.channel_id == ANIME_CHANNEL_ID
-
 # Attach the check to the bot
 bot.is_chat_channel  = is_chat_channel
-bot.is_anime_channel = is_anime_channel
 
 # ── Events ─────────────────────────────────
 @bot.event
@@ -90,10 +86,7 @@ async def on_interaction(interaction: discord.Interaction):
         channel_id = interaction.channel_id
         command_name = interaction.data.get("name", "")
 
-        special = {
-            "anime": ANIME_CHANNEL_ID,
-            "manga": MANGA_CHANNEL_ID,
-        }
+        special = {}
 
         chat_only = [
             "image", "tag", "character", "top", "season",

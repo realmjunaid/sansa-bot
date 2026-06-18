@@ -10,7 +10,7 @@ import logging
 import platform
 from datetime import datetime, timezone
 from config import (
-    CHAT_CHANNEL_ID, ANIME_CHANNEL_ID,
+    CHAT_CHANNEL_ID,
     COLOR_UTIL, COLOR_ERROR, BOT_NAME, BOT_VERSION, BOT_AUTHOR
 )
 
