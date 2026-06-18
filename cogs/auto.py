@@ -15,7 +15,7 @@ from datetime import datetime
 from config import (
     WAIFU_CHANNEL_ID, ANIME_CHANNEL_ID, HANIME_CHANNEL_ID,
     HDAD_CHANNEL_ID, SAKUH_CHANNEL_ID, LUCI_CHANNEL_ID,
-    MANGA_CHANNEL_ID, MEMES_CHANNEL_ID,
+    STICKY_CHANNEL_ID, MANGA_CHANNEL_ID, MEMES_CHANNEL_ID,
     WAIFU_TAGS, COLOR_WAIFU, COLOR_ANIME, COLOR_MANGA, COLOR_MEMES
 )
 
@@ -103,6 +103,7 @@ class Auto(commands.Cog):
         self.anime_count_today = 0
         self.hanime_count_today = 0
         self.hzone_count_today = 0
+        self.sticky_count_today = 0
         self.manga_count_today = 0
         self.memes_count_today = 0
         self.last_reset = datetime.utcnow().date()
@@ -111,6 +112,7 @@ class Auto(commands.Cog):
         self.auto_anime.start()
         self.auto_hanime.start()
         self.auto_hdad.start()
+        self.auto_sticky.start()
         self.auto_sakuh.start()
         self.auto_luci.start()
         self.auto_manga.start()
@@ -122,6 +124,7 @@ class Auto(commands.Cog):
         self.auto_anime.cancel()
         self.auto_hanime.cancel()
         self.auto_hdad.cancel()
+        self.auto_sticky.cancel()
         self.auto_sakuh.cancel()
         self.auto_luci.cancel()
         self.auto_manga.cancel()
@@ -135,6 +138,7 @@ class Auto(commands.Cog):
             self.anime_count_today = 0
             self.hanime_count_today = 0
             self.hzone_count_today = 0
+            self.sticky_count_today = 0
             self.manga_count_today = 0
             self.memes_count_today = 0
             self.last_reset = today
@@ -435,6 +439,55 @@ class Auto(commands.Cog):
     async def before_auto_hdad(self):
         await self.bot.wait_until_ready()
 
+    # ── Auto Sticky (stickyhentai.com) - Every Hour ───────
+    @tasks.loop(hours=1)
+    async def auto_sticky(self):
+        await self.bot.wait_until_ready()
+        self.check_reset()
+
+        channel = self.bot.get_channel(STICKY_CHANNEL_ID)
+        if not channel:
+            return
+
+        sticky_cog = self.bot.get_cog("Sticky")
+        if not sticky_cog:
+            return
+
+        post = await sticky_cog.get_random_sticky_post()
+        if not post or not post.get("images"):
+            return
+
+        self.sticky_count_today += 1
+        images_to_post = post["images"][:15]
+        total = len(images_to_post)
+
+        header = discord.Embed(
+            title=f"🔞 {post['character']}",
+            color=0xE91E63,
+            timestamp=datetime.utcnow()
+        )
+        header.add_field(
+            name="🔗 Source",
+            value=post.get("source_url", "https://stickyhentai.com"),
+            inline=False
+        )
+        header.add_field(name="📸 Images", value=f"**{total}** images", inline=True)
+        header.add_field(name="📊 Today", value=f"{self.sticky_count_today}/24", inline=True)
+        header.set_footer(text="Sansa Bot • stickyhentai.com")
+        await channel.send(embed=header)
+
+        for i, img_url in enumerate(images_to_post, 1):
+            img_embed = discord.Embed(color=0xE91E63)
+            img_embed.set_image(url=img_url)
+            img_embed.set_footer(text=f"{post['character']}  •  {i}/{total}  •  stickyhentai.com")
+            await channel.send(embed=img_embed)
+
+        log.info(f"✅ Auto sticky posted {total} images ({self.sticky_count_today}/24)")
+
+    @auto_sticky.before_loop
+    async def before_auto_sticky(self):
+        await self.bot.wait_until_ready()
+
     # ── Auto Sakuh (sakuhentai.net) - Every Hour ───────
     @tasks.loop(hours=1)
     async def auto_sakuh(self):
@@ -632,6 +685,10 @@ class Auto(commands.Cog):
     @property
     def hzone_today(self):
         return self.hzone_count_today
+
+    @property
+    def sticky_today(self):
+        return self.sticky_count_today
 
     @property
     def manga_today(self):

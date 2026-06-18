@@ -10,7 +10,7 @@ import aiohttp
 import logging
 import random
 from config import (
-    CHAT_CHANNEL_ID, COLOR_ANIME, COLOR_ERROR
+    ANIME_CHANNEL_ID, COLOR_ANIME, COLOR_ERROR
 )
 
 log = logging.getLogger("SansaBot.Anime")
@@ -112,9 +112,9 @@ class Anime(commands.Cog):
 
     # ── Channel Check ──────────────────────
     async def check_channel(self, interaction: discord.Interaction) -> bool:
-        if interaction.channel_id != CHAT_CHANNEL_ID:
+        if interaction.channel_id != ANIME_CHANNEL_ID:
             embed = discord.Embed(
-                description=f"❌ This command only works in <#{CHAT_CHANNEL_ID}>!",
+                description=f"❌ This command only works in <#{ANIME_CHANNEL_ID}>!",
                 color=COLOR_ERROR
             )
             await interaction.response.send_message(embed=embed, ephemeral=True)

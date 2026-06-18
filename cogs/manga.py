@@ -10,7 +10,7 @@ import aiohttp
 import logging
 import random
 from config import (
-    CHAT_CHANNEL_ID, COLOR_MANGA, COLOR_ERROR
+    MANGA_CHANNEL_ID, COLOR_MANGA, COLOR_ERROR
 )
 
 log = logging.getLogger("SansaBot.Manga")
@@ -62,20 +62,20 @@ query ($page: Int) {
 class Manga(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        log.info(f"✅ Manga Cog loaded (CHAT_CHANNEL_ID={CHAT_CHANNEL_ID})")
+        log.info(f"✅ Manga Cog loaded (MANGA_CHANNEL_ID={MANGA_CHANNEL_ID})")
 
     # ── Channel Check ──────────────────────
     async def check_channel(self, interaction: discord.Interaction) -> bool:
-        if CHAT_CHANNEL_ID == 0:
-            log.error("[Manga] CHAT_CHANNEL_ID is 0 (not set in .env)!")
-            await interaction.response.send_message("❌ Bot misconfigured: CHAT_CHANNEL_ID not set in .env", ephemeral=True)
+        if MANGA_CHANNEL_ID == 0:
+            log.error("[Manga] MANGA_CHANNEL_ID is 0 (not set in .env)!")
+            await interaction.response.send_message("❌ Bot misconfigured: MANGA_CHANNEL_ID not set in .env", ephemeral=True)
             return False
-        if interaction.channel_id != CHAT_CHANNEL_ID:
-            ch = interaction.guild.get_channel(CHAT_CHANNEL_ID) if interaction.guild else None
-            ch_name = ch.name if ch else "anime-chat"
-            log.warning(f"[Manga] Blocked /manga from #{getattr(interaction.channel, 'name', 'unknown')} (need #{ch_name} id={CHAT_CHANNEL_ID})")
+        if interaction.channel_id != MANGA_CHANNEL_ID:
+            ch = interaction.guild.get_channel(MANGA_CHANNEL_ID) if interaction.guild else None
+            ch_name = ch.name if ch else "manga-zone"
+            log.warning(f"[Manga] Blocked /manga from #{getattr(interaction.channel, 'name', 'unknown')} (need #{ch_name} id={MANGA_CHANNEL_ID})")
             embed = discord.Embed(
-                description=f"❌ This command only works in <#{CHAT_CHANNEL_ID}>!",
+                description=f"❌ This command only works in <#{MANGA_CHANNEL_ID}>!",
                 color=COLOR_ERROR
             )
             await interaction.response.send_message(embed=embed, ephemeral=True)

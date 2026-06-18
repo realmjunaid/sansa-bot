@@ -12,7 +12,8 @@ from datetime import datetime
 from config import (
     BOT_TOKEN, BOT_PREFIX, BOT_NAME, BOT_VERSION,
     CHAT_CHANNEL_ID, WAIFU_CHANNEL_ID, ANIME_CHANNEL_ID,
-    SAVE_CHANNEL_ID, COLOR_ERROR
+    MANGA_CHANNEL_ID, HANIME_CHANNEL_ID, HDAD_CHANNEL_ID,
+    SAKUH_CHANNEL_ID, LUCI_CHANNEL_ID, STICKY_CHANNEL_ID, SAVE_CHANNEL_ID, COLOR_ERROR
 )
 
 # ── Logging Setup ──────────────────────────
@@ -52,6 +53,7 @@ COGS = [
     "cogs.hentaidad",
     "cogs.sakuh",
     "cogs.luci",
+    "cogs.sticky",
 ]
 
 # ── Channel Check ──────────────────────────
@@ -98,15 +100,32 @@ async def on_interaction(interaction: discord.Interaction):
         channel_id = interaction.channel_id
         command_name = interaction.data.get("name", "")
 
-        # These commands only work in the allowed chat channel
-        restricted_commands = [
-            "image", "waifu", "tag", "anime", "character",
-            "top", "season", "manga", "quiz", "memes",
-            "quote", "fact", "help", "ping", "status",
-            "schedule", "count"
+        special = {
+            "waifu": WAIFU_CHANNEL_ID,
+            "anime": ANIME_CHANNEL_ID,
+            "manga": MANGA_CHANNEL_ID,
+            "hanime": HANIME_CHANNEL_ID,
+            "hdad": HDAD_CHANNEL_ID,
+            "saku": SAKUH_CHANNEL_ID,
+            "luci": LUCI_CHANNEL_ID,
+            "sticky": STICKY_CHANNEL_ID,
+        }
+
+        chat_only = [
+            "image", "tag", "character", "top", "season",
+            "quiz", "memes", "quote", "fact", "help",
+            "ping", "status", "schedule", "count"
         ]
 
-        if command_name in restricted_commands:
+        if command_name in special:
+            if channel_id != special[command_name]:
+                embed = discord.Embed(
+                    description=f"❌ This command only works in <#{special[command_name]}>!",
+                    color=COLOR_ERROR
+                )
+                await interaction.response.send_message(embed=embed, ephemeral=True)
+                return
+        elif command_name in chat_only:
             if channel_id != CHAT_CHANNEL_ID:
                 embed = discord.Embed(
                     description=f"❌ This command only works in <#{CHAT_CHANNEL_ID}>!",

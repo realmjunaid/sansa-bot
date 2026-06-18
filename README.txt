@@ -49,18 +49,22 @@
    STEP 4: .env File তৈরি করো
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-sansa-bot folder এ একটা ".env" নামের file বানাও:
+sansa-bot folder এ ".env.example" ফাইল আছে।
+সেটা কপি করে ".env" নামে বানাও:
 
-BOT_TOKEN=তোমার_bot_token_এখানে
-WAIFU_CHANNEL_ID=waifu_zone_channel_id
-ANIME_CHANNEL_ID=anime_zone_channel_id
-CHAT_CHANNEL_ID=anime_chat_channel_id
+cp .env.example .env     (Linux/Mac)
+copy .env.example .env   (Windows)
+
+তারপর .env ফাইলে তোমার আসল values বসাও।
 
 উদাহরণ:
 BOT_TOKEN=MTIzNDU2Nzg5MDEyMzQ1Njc4.XXXXXX.XXXXXXXXXXXXXXXXXXXXXXXXX
 WAIFU_CHANNEL_ID=1234567890123456789
 ANIME_CHANNEL_ID=1234567890123456790
 CHAT_CHANNEL_ID=1234567890123456791
+STICKY_CHANNEL_ID=1234567890123456799
+
+⚠️ .env file কখনো GitHub এ আপলোড করো না!
 
 ⚠️ সতর্কতা: .env file কখনো কাউকে দেবে না!
 

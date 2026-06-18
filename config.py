@@ -20,8 +20,9 @@ CHAT_CHANNEL_ID  = int(os.getenv("CHAT_CHANNEL_ID",  0))   # #anime-chat
 HANIME_CHANNEL_ID = int(os.getenv("HANIME_CHANNEL_ID", 0))   # #hanime (auto NSFW posts + commands)
 SAVE_CHANNEL_ID = int(os.getenv("SAVE_CHANNEL_ID", 0))   # #save (❤️ Save / ❌ Unsave feature)
 HDAD_CHANNEL_ID = int(os.getenv("HDAD_CHANNEL_ID", 0))   # #hdad (auto NSFW every hour - hentaidad only)
-SAKUH_CHANNEL_ID = int(os.getenv("SAKUH_CHANNEL_ID", 0))   # #sakuh (sakuhentai.net images + videos)
-LUCI_CHANNEL_ID = int(os.getenv("LUCI_CHANNEL_ID", 0))   # #luci (lucioushentai.com)
+    SAKUH_CHANNEL_ID = int(os.getenv("SAKUH_CHANNEL_ID", 0))   # #sakuh (sakuhentai.net images + videos)
+    LUCI_CHANNEL_ID = int(os.getenv("LUCI_CHANNEL_ID", 0))   # #luci (lucioushentai.com)
+    STICKY_CHANNEL_ID = int(os.getenv("STICKY_CHANNEL_ID", 0))   # #sticky (stickyhentai.com)
 
 # ── Bot Settings ───────────────────────────
 BOT_PREFIX       = "/"

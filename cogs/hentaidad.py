@@ -181,10 +181,6 @@ class Hentaidad(commands.Cog):
         """Get 15 random images from hentaidad.com only"""
         return await self.scrape_random_gallery()
 
-    async def get_random_hzone_post(self):
-        """Get 15 random images from hentaidad.com only"""
-        return await self.scrape_random_gallery()
-
     # ── /hdad Command ───────────────────────
     @app_commands.command(name="hdad", description="🔞 Get random hentai images (hentaidad.com)")
     @app_commands.describe(query="Character or title (optional)")
