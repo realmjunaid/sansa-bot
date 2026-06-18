@@ -189,14 +189,14 @@ class WatchtimeView(discord.ui.View):
         total_h = round(total_min / 60, 1)
         total_d = round(total_h / 24, 1)
 
-        msg = f"""📺 {title}
-🎬 Episodes: {episodes}
-⏱️ Per Episode: {per_ep} min
-─────────────────
-⏱️ Total: {total_h} hours
-📅 That's {total_d} days of your life! 😭"""
+        embed = discord.Embed(title=f"📺 {title}", color=COLOR_ANIME)
+        embed.add_field(name="🎬 Episodes", value=str(episodes), inline=True)
+        embed.add_field(name="⏱️ Per Episode", value=f"{per_ep} min", inline=True)
+        embed.add_field(name="\u200b", value="─────────────────", inline=False)
+        embed.add_field(name="⏱️ Total", value=f"{total_h} hours", inline=False)
+        embed.add_field(name="📅 That's", value=f"{total_d} days of your life! 😭", inline=False)
 
-        await interaction.response.edit_message(content=msg, view=None)
+        await interaction.response.edit_message(content=None, embed=embed, view=None)
 
     async def show_combined(self, interaction):
         lines = []
@@ -222,14 +222,13 @@ class WatchtimeView(discord.ui.View):
         total_d = round(total_h / 24, 1)
 
         breakdown = "\n".join(lines)
-        msg = f"""📺 {base_title} — Complete Series
+        embed = discord.Embed(title=f"📺 {base_title} — Complete Series", color=COLOR_ANIME)
+        embed.add_field(name="Breakdown", value=breakdown, inline=False)
+        embed.add_field(name="\u200b", value="─────────────────────────────────", inline=False)
+        embed.add_field(name="⏱️ Total", value=f"{total_h} hours", inline=False)
+        embed.add_field(name="📅 That's", value=f"{total_d} days of your life! 😭", inline=False)
 
-{breakdown}
-─────────────────────────────────
-⏱️ Total: {total_h} hours
-📅 That's {total_d} days of your life! 😭"""
-
-        await interaction.response.edit_message(content=msg, view=None)
+        await interaction.response.edit_message(content=None, embed=embed, view=None)
 
     async def on_timeout(self):
         if self.message:
@@ -670,7 +669,7 @@ class Anime(commands.Cog):
         # Case 2: Multiple → dropdown
         view = WatchtimeView(results, interaction.user.id, self)
         msg = await interaction.followup.send(
-            f"🔍 Multiple results for **{title}**. Select one from the menu:",
+            f"🔍 Multiple results for **{title}**. Select one:",
             view=view
         )
         view.message = msg
@@ -688,14 +687,14 @@ class Anime(commands.Cog):
         total_h = round(total_min / 60, 1)
         total_d = round(total_h / 24, 1)
 
-        msg = f"""📺 {title}
-🎬 Episodes: {episodes}
-⏱️ Per Episode: {per_ep} min
-─────────────────
-⏱️ Total: {total_h} hours
-📅 That's {total_d} days of your life! 😭"""
+        embed = discord.Embed(title=f"📺 {title}", color=COLOR_ANIME)
+        embed.add_field(name="🎬 Episodes", value=str(episodes), inline=True)
+        embed.add_field(name="⏱️ Per Episode", value=f"{per_ep} min", inline=True)
+        embed.add_field(name="\u200b", value="─────────────────", inline=False)
+        embed.add_field(name="⏱️ Total", value=f"{total_h} hours", inline=False)
+        embed.add_field(name="📅 That's", value=f"{total_d} days of your life! 😭", inline=False)
 
-        await interaction.followup.send(msg)
+        await interaction.followup.send(embed=embed)
 
 
 async def setup(bot):
