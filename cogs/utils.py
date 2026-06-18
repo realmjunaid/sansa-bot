@@ -10,7 +10,7 @@ import logging
 import platform
 from datetime import datetime, timezone
 from config import (
-    CHAT_CHANNEL_ID, WAIFU_CHANNEL_ID, ANIME_CHANNEL_ID,
+    CHAT_CHANNEL_ID, ANIME_CHANNEL_ID,
     COLOR_UTIL, COLOR_ERROR, BOT_NAME, BOT_VERSION, BOT_AUTHOR
 )
 
@@ -42,16 +42,6 @@ class Utils(commands.Cog):
             title="📋 Sansa Bot — Command List",
             description="All commands only work in **#anime-chat**!",
             color=COLOR_UTIL
-        )
-
-        embed.add_field(
-            name="🌸 Waifu Commands",
-            value=(
-                "`/image` — Random waifu image\n"
-                "`/waifu` — Random ecchi waifu images (15)\n"
-                "`/tag <name>` — Get image by tag"
-            ),
-            inline=False
         )
 
         embed.add_field(
@@ -112,25 +102,9 @@ class Utils(commands.Cog):
         embed.add_field(
             name="🤖 Auto Features",
             value=(
-                "**#waifu-zone** — Waifu image every hour\n"
                 "**#anime-zone** — Random anime every hour\n"
                 "**#manga-zone** — Random manga every hour\n"
-                "**#memes-zone** — Anime meme every hour\n"
-                "**#hanime** — NSFW hentai every hour (12 images per post) + /hanime commands\n"
-                "**#hdad** — hentaidad.com hentai every hour (12 images per post)\n"
-                "**#sakuh** — Sakuhentai images every hour (15 images of the same character)"
-            ),
-            inline=False
-        )
-
-        embed.add_field(
-            name="🔞 NSFW Commands",
-            value=(
-                "`/hanime` — Random hentai (12 images)\n"
-                "`/hanime <character>` — Search hentai by character/anime name\n"
-                "`/hdad` — Random hentai (12 images)\n"
-                "`/hdad <name>` — Search hentai by character/title\n"
-                "`/saku` — 15 images of the same character from Sakuhentai"
+                "**#memes-zone** — Anime meme every hour"
             ),
             inline=False
         )
@@ -140,16 +114,11 @@ class Utils(commands.Cog):
 
     # ── Category map for grouping live commands (matches /help sections) ──
     CATEGORY_MAP = {
-        "Waifu": "🌸 Waifu Commands",
         "Anime": "🎌 Anime Commands",
         "Manga": "📚 Manga Commands",
         "Memes": "😂 Memes Commands",
         "Fun": "🎉 Fun Commands",
         "Utils": "⚙️ Utility Commands",
-        "Hanime": "🔞 NSFW Commands",
-        "Hentaidad": "🔞 NSFW Commands",
-        "Sakuh": "🔞 NSFW Commands",
-        "Luci": "🔞 NSFW Commands",
     }
 
     def _format_command(self, cmd: app_commands.AppCommand) -> str:
@@ -194,13 +163,11 @@ class Utils(commands.Cog):
 
         # Preserve logical order matching /help
         ordered_cats = [
-            "🌸 Waifu Commands",
             "🎌 Anime Commands",
             "📚 Manga Commands",
             "😂 Memes Commands",
             "🎉 Fun Commands",
             "⚙️ Utility Commands",
-            "🔞 NSFW Commands",
         ]
 
         for cat in ordered_cats:
@@ -257,9 +224,7 @@ class Utils(commands.Cog):
 
         # Auto cog থেকে count নাও
         auto_cog = self.bot.cogs.get("Auto")
-        waifu_count = auto_cog.waifu_today if auto_cog else 0
         anime_count = auto_cog.anime_today if auto_cog else 0
-        hzone_count = auto_cog.hzone_today if auto_cog else 0
         manga_count = auto_cog.manga_today if auto_cog else 0
         memes_count = auto_cog.memes_today if auto_cog else 0
 
@@ -272,9 +237,7 @@ class Utils(commands.Cog):
         embed.add_field(name="📌 Version", value=f"v{BOT_VERSION}", inline=True)
         embed.add_field(name="⏱️ Uptime", value=uptime_str, inline=True)
         embed.add_field(name="📡 Latency", value=f"{round(self.bot.latency * 1000)}ms", inline=True)
-        embed.add_field(name="🌸 Waifu Today", value=f"{waifu_count}/24", inline=True)
         embed.add_field(name="🎌 Anime Today", value=f"{anime_count}/24", inline=True)
-        embed.add_field(name="🔞 Hzone Today", value=f"{hzone_count}/24", inline=True)
         embed.add_field(name="📚 Manga Today", value=f"{manga_count}/24", inline=True)
         embed.add_field(name="😂 Memes Today", value=f"{memes_count}/24", inline=True)
         embed.add_field(name="🐍 Python", value=platform.python_version(), inline=True)
@@ -292,19 +255,10 @@ class Utils(commands.Cog):
         current_hour = now.hour
         current_minute = now.minute
 
-        # Next waifu post
-        next_waifu_minutes = 60 - current_minute
-        next_waifu_str = f"in {next_waifu_minutes} minutes"
-
         embed = discord.Embed(
             title="⏰ Auto Post Schedule",
             color=COLOR_UTIL,
             timestamp=now
-        )
-        embed.add_field(
-            name="🌸 Next Waifu Post",
-            value=f"**#{interaction.guild.get_channel(WAIFU_CHANNEL_ID).name if interaction.guild.get_channel(WAIFU_CHANNEL_ID) else 'waifu-zone'}**\n⏱️ {next_waifu_str}",
-            inline=False
         )
         embed.add_field(
             name="🎌 Anime Posts",
@@ -326,10 +280,7 @@ class Utils(commands.Cog):
             return
 
         auto_cog = self.bot.cogs.get("Auto")
-        waifu_count = auto_cog.waifu_today if auto_cog else 0
         anime_count = auto_cog.anime_today if auto_cog else 0
-        hanime_count = auto_cog.hanime_today if auto_cog else 0
-        hzone_count = auto_cog.hzone_today if auto_cog else 0
         manga_count = auto_cog.manga_today if auto_cog else 0
         memes_count = auto_cog.memes_today if auto_cog else 0
 
@@ -339,23 +290,8 @@ class Utils(commands.Cog):
             timestamp=datetime.now(timezone.utc)
         )
         embed.add_field(
-            name="🌸 Waifu Posts",
-            value=f"**{waifu_count}/24**\n{'▓' * waifu_count}{'░' * (24 - waifu_count)}",
-            inline=False
-        )
-        embed.add_field(
             name="🎌 Anime Posts",
             value=f"**{anime_count}/24**\n{'▓' * anime_count}{'░' * (24 - anime_count)}",
-            inline=False
-        )
-        embed.add_field(
-            name="🔞 Hanime Posts (NSFW)",
-            value=f"**{hanime_count}/24** (12 images each)\n{'▓' * hanime_count}{'░' * (24 - hanime_count)}",
-            inline=False
-        )
-        embed.add_field(
-            name="🔞 Hzone Posts (NSFW - hentaidad)",
-            value=f"**{hzone_count}/24** (12 images each)\n{'▓' * hzone_count}{'░' * (24 - hzone_count)}",
             inline=False
         )
         embed.add_field(

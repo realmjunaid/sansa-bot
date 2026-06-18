@@ -11,9 +11,8 @@ import logging
 from datetime import datetime
 from config import (
     BOT_TOKEN, BOT_PREFIX, BOT_NAME, BOT_VERSION,
-    CHAT_CHANNEL_ID, WAIFU_CHANNEL_ID, ANIME_CHANNEL_ID,
-    MANGA_CHANNEL_ID, HANIME_CHANNEL_ID, HDAD_CHANNEL_ID,
-    SAKUH_CHANNEL_ID, LUCI_CHANNEL_ID, SAVE_CHANNEL_ID, COLOR_ERROR
+    CHAT_CHANNEL_ID, ANIME_CHANNEL_ID,
+    MANGA_CHANNEL_ID, SAVE_CHANNEL_ID, COLOR_ERROR
 )
 
 # ── Logging Setup ──────────────────────────
@@ -42,32 +41,23 @@ bot.start_time = datetime.utcnow()
 
 # ── Cogs List ──────────────────────────────
 COGS = [
-    "cogs.waifu",
     "cogs.anime",
     "cogs.manga",
     "cogs.memes",
     "cogs.fun",
     "cogs.utils",
     "cogs.auto",
-    "cogs.hanime",
-    "cogs.hentaidad",
-    "cogs.sakuh",
-    "cogs.luci",
 ]
 
 # ── Channel Check ──────────────────────────
 def is_chat_channel(interaction: discord.Interaction) -> bool:
     return interaction.channel_id == CHAT_CHANNEL_ID
 
-def is_waifu_channel(interaction: discord.Interaction) -> bool:
-    return interaction.channel_id == WAIFU_CHANNEL_ID
-
 def is_anime_channel(interaction: discord.Interaction) -> bool:
     return interaction.channel_id == ANIME_CHANNEL_ID
 
 # Attach the check to the bot
 bot.is_chat_channel  = is_chat_channel
-bot.is_waifu_channel = is_waifu_channel
 bot.is_anime_channel = is_anime_channel
 
 # ── Events ─────────────────────────────────
@@ -100,13 +90,8 @@ async def on_interaction(interaction: discord.Interaction):
         command_name = interaction.data.get("name", "")
 
         special = {
-            "waifu": WAIFU_CHANNEL_ID,
             "anime": ANIME_CHANNEL_ID,
             "manga": MANGA_CHANNEL_ID,
-            "hanime": HANIME_CHANNEL_ID,
-            "hdad": HDAD_CHANNEL_ID,
-            "saku": SAKUH_CHANNEL_ID,
-            "luci": LUCI_CHANNEL_ID,
         }
 
         chat_only = [

@@ -38,12 +38,11 @@
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 1. Discord Settings → Advanced → Developer Mode: ON
-2. তোমার server এ এই 3টি channel বানাও:
-   • #waifu-zone
+2. তোমার server এ এই 2টি channel বানাও:
    • #anime-zone
    • #anime-chat
 3. প্রতিটা channel এ Right Click → "Copy Channel ID"
-4. তিনটা ID আলাদা করে রাখো
+4. ID দুটো আলাদা করে রাখো
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
    STEP 4: .env File তৈরি করো
@@ -59,7 +58,6 @@ copy .env.example .env   (Windows)
 
 উদাহরণ:
 BOT_TOKEN=MTIzNDU2Nzg5MDEyMzQ1Njc4.XXXXXX.XXXXXXXXXXXXXXXXXXXXXXXXX
-WAIFU_CHANNEL_ID=1234567890123456789
 ANIME_CHANNEL_ID=1234567890123456790
 CHAT_CHANNEL_ID=1234567890123456791
 
@@ -100,7 +98,6 @@ sansa-bot/
 ├── .env                ← Token & IDs (তুমি বানাবে)
 └── cogs/
     ├── auto.py         ← Auto posting
-    ├── waifu.py        ← Waifu commands
     ├── anime.py        ← Anime commands
     ├── manga.py        ← Manga commands
     ├── memes.py        ← Memes commands
@@ -111,7 +108,6 @@ sansa-bot/
    CHANNEL SYSTEM
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-#waifu-zone  → শুধু auto waifu image (প্রতি ঘণ্টায়)
 #anime-zone  → শুধু auto anime details (প্রতি ঘণ্টায় - 24/day via MyAnimeList/Jikan)
 #manga-zone  → auto manga (প্রতি ঘণ্টায়)
 #memes-zone  → auto memes (প্রতি ঘণ্টায়)
@@ -120,11 +116,6 @@ sansa-bot/
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
    COMMAND LIST
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-🌸 Waifu:
-  /image              - Random waifu image
-  /waifu <character>  - Specific character
-  /tag <name>         - Tag দিয়ে image
 
 🎌 Anime:
   /anime              - Random anime
