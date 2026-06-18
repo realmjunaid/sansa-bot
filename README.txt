@@ -99,6 +99,7 @@ sansa-bot/
 └── cogs/
     ├── auto.py         ← Auto posting
     ├── anime.py        ← Anime commands
+    ├── alerts.py       ← Episode alerts + tracking
     ├── manga.py        ← Manga commands
     ├── memes.py        ← Memes commands
     ├── fun.py          ← Fun commands
@@ -112,6 +113,7 @@ sansa-bot/
 #manga-zone  → auto manga (প্রতি ঘণ্টায়)
 #memes-zone  → auto memes (প্রতি ঘণ্টায়)
 #anime-chat  → সব commands এখানে কাজ করে
+#anime-updates → episode release alerts + auto reports
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
    COMMAND LIST
@@ -123,6 +125,16 @@ sansa-bot/
   /character <name>   - Character details
   /top                - Top 10 anime
   /season             - Current season
+
+📡 Alerts:
+  /epalert <name>     - Track for episode reminders
+  /epremove <name>    - Stop tracking
+  /alertlist          - Your list
+  /myanime            - Dashboard
+  /nextrelease        - Countdowns
+  /animecalendar      - Weekly schedule
+  /weeklyanime        - Last 7 days
+  /trendinganime      - Current top 10
 
 📚 Manga:
   /manga              - Random manga

@@ -12,7 +12,7 @@ from datetime import datetime
 from config import (
     BOT_TOKEN, BOT_PREFIX, BOT_NAME, BOT_VERSION,
     CHAT_CHANNEL_ID, ANIME_CHANNEL_ID,
-    MANGA_CHANNEL_ID, SAVE_CHANNEL_ID, COLOR_ERROR
+    MANGA_CHANNEL_ID, ANIME_UPDATES_CHANNEL_ID, SAVE_CHANNEL_ID, COLOR_ERROR
 )
 
 # ── Logging Setup ──────────────────────────
@@ -47,6 +47,7 @@ COGS = [
     "cogs.fun",
     "cogs.utils",
     "cogs.auto",
+    "cogs.alerts",
 ]
 
 # ── Channel Check ──────────────────────────
@@ -97,7 +98,9 @@ async def on_interaction(interaction: discord.Interaction):
         chat_only = [
             "image", "tag", "character", "top", "season",
             "quiz", "memes", "quote", "fact", "help",
-            "ping", "status", "schedule", "count"
+            "ping", "status", "schedule", "count",
+            "epalert", "epremove", "alertlist", "myanime",
+            "nextrelease", "animecalendar", "weeklyanime", "trendinganime"
         ]
 
         if command_name in special:

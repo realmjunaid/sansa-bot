@@ -16,6 +16,7 @@ ANIME_CHANNEL_ID = int(os.getenv("ANIME_CHANNEL_ID", 0))   # #anime-zone
 MANGA_CHANNEL_ID = int(os.getenv("MANGA_CHANNEL_ID", 0))   # #manga-zone (auto)
 MEMES_CHANNEL_ID = int(os.getenv("MEMES_CHANNEL_ID", 0))   # #memes-zone (auto)
 CHAT_CHANNEL_ID  = int(os.getenv("CHAT_CHANNEL_ID",  0))   # #anime-chat
+ANIME_UPDATES_CHANNEL_ID = int(os.getenv("ANIME_UPDATES_CHANNEL_ID", 0))   # #anime-updates (episode alerts)
 SAVE_CHANNEL_ID = int(os.getenv("SAVE_CHANNEL_ID", 0))   # #save (❤️ Save / ❌ Unsave feature)
 
 # ── Bot Settings ───────────────────────────

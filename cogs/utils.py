@@ -115,6 +115,7 @@ class Utils(commands.Cog):
     # ── Category map for grouping live commands (matches /help sections) ──
     CATEGORY_MAP = {
         "Anime": "🎌 Anime Commands",
+        "Alerts": "📡 Episode Alerts",
         "Manga": "📚 Manga Commands",
         "Memes": "😂 Memes Commands",
         "Fun": "🎉 Fun Commands",
@@ -164,6 +165,7 @@ class Utils(commands.Cog):
         # Preserve logical order matching /help
         ordered_cats = [
             "🎌 Anime Commands",
+            "📡 Episode Alerts",
             "📚 Manga Commands",
             "😂 Memes Commands",
             "🎉 Fun Commands",
