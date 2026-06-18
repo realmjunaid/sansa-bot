@@ -86,6 +86,23 @@ query ($season: MediaSeason, $year: Int) {
 }
 """
 
+SEARCH_MULTIPLE_QUERY = """
+query ($search: String) {
+  Page(perPage: 8) {
+    media(search: $search, type: ANIME, sort: POPULARITY_DESC) {
+      id
+      title { romaji english }
+      episodes
+      duration
+      season
+      seasonYear
+      format
+      status
+    }
+  }
+}
+"""
+
 CHARACTER_QUERY = """
 query ($search: String) {
   Character(search: $search) {
@@ -102,9 +119,125 @@ query ($search: String) {
         coverImage { large }
       }
     }
-  }
-}
+   }
+ }
 """
+
+class WatchtimeView(discord.ui.View):
+    def __init__(self, results, author_id, cog):
+        super().__init__(timeout=30.0)
+        self.results = results
+        self.author_id = author_id
+        self.cog = cog
+        self.message = None
+
+        options = []
+        for i, m in enumerate(results):
+            title = m.get("title", {}).get("english") or m.get("title", {}).get("romaji", "Unknown")
+            season = m.get("season") or ""
+            year = m.get("seasonYear") or ""
+            fmt = m.get("format") or ""
+            label = title
+            if season and year:
+                label += f" {season} {year}"
+            elif fmt:
+                label += f" ({fmt})"
+            if len(label) > 100:
+                label = label[:97] + "..."
+            options.append(discord.SelectOption(label=label, value=str(i)))
+
+        options.append(discord.SelectOption(label="🔥 All Seasons Combined", value="COMBINED"))
+
+        select = discord.ui.Select(
+            placeholder="Choose an option...",
+            options=options[:25],
+            min_values=1,
+            max_values=1
+        )
+        select.callback = self.on_select
+        self.add_item(select)
+
+    async def on_select(self, interaction: discord.Interaction):
+        if interaction.user.id != self.author_id:
+            await interaction.response.send_message("❌ Only the person who used the command can select.", ephemeral=True)
+            return
+
+        value = interaction.data.get("values", [None])[0]
+        if value == "COMBINED":
+            await self.show_combined(interaction)
+        else:
+            try:
+                idx = int(value)
+                media = self.results[idx]
+                await self.show_single(interaction, media)
+            except:
+                await interaction.response.send_message("❌ Invalid selection.", ephemeral=True)
+                return
+
+        self.stop()
+
+    async def show_single(self, interaction, media):
+        title = media.get("title", {}).get("english") or media.get("title", {}).get("romaji", "Unknown")
+        episodes = media.get("episodes") or 0
+        per_ep = self.cog.parse_duration(media.get("duration"))
+
+        if episodes <= 0:
+            await interaction.response.send_message("❌ Episode count not available for this title.", ephemeral=True)
+            return
+
+        total_min = episodes * per_ep
+        total_h = round(total_min / 60, 1)
+        total_d = round(total_h / 24, 1)
+
+        msg = f"""📺 {title}
+🎬 Episodes: {episodes}
+⏱️ Per Episode: {per_ep} min
+─────────────────
+⏱️ Total: {total_h} hours
+📅 That's {total_d} days of your life! 😭"""
+
+        await interaction.response.edit_message(content=msg, view=None)
+
+    async def show_combined(self, interaction):
+        lines = []
+        grand_total_min = 0
+
+        base_title = self.results[0].get("title", {}).get("english") or self.results[0].get("title", {}).get("romaji", "Series")
+
+        for m in self.results:
+            title = m.get("title", {}).get("english") or m.get("title", {}).get("romaji", "Unknown")
+            ep = m.get("episodes") or 0
+            dur = self.cog.parse_duration(m.get("duration"))
+            if ep <= 0:
+                continue
+            h = round(ep * dur / 60, 1)
+            lines.append(f"{title}      →  {ep} ep × {dur} min =  {h} hrs")
+            grand_total_min += ep * dur
+
+        if not lines:
+            await interaction.response.send_message("❌ No valid data for combined.", ephemeral=True)
+            return
+
+        total_h = round(grand_total_min / 60, 1)
+        total_d = round(total_h / 24, 1)
+
+        breakdown = "\n".join(lines)
+        msg = f"""📺 {base_title} — Complete Series
+
+{breakdown}
+─────────────────────────────────
+⏱️ Total: {total_h} hours
+📅 That's {total_d} days of your life! 😭"""
+
+        await interaction.response.edit_message(content=msg, view=None)
+
+    async def on_timeout(self):
+        if self.message:
+            try:
+                await self.message.edit(content="⏰ Time's up!\nMenu expired. আবার /watchtime দাও।", view=None)
+            except:
+                pass
+
 
 class Anime(commands.Cog):
     def __init__(self, bot):
@@ -515,50 +648,52 @@ class Anime(commands.Cog):
 
         await interaction.response.defer()
 
-        # Try Jikan first
-        data = await self.jikan_request(f"anime?q={title}&limit=1")
-        anime = None
+        # Use AniList multi search
+        data = await self.anilist_request(SEARCH_MULTIPLE_QUERY, {"search": title})
+        results = []
+        if data and data.get("data", {}).get("Page", {}).get("media"):
+            results = data["data"]["Page"]["media"]
 
-        if data and data.get("data"):
-            anime = data["data"][0]
-        else:
-            # Fallback to AniList
-            data = await self.anilist_request(SEARCH_ANIME_QUERY, {"search": title})
-            if data and data.get("data", {}).get("Media"):
-                anime = data["data"]["Media"]
-
-        if not anime:
+        if not results:
             embed = discord.Embed(
-                description=f"❌ No anime found with the name **{title}**!",
+                description=f"❌ No anime found with **{title}**!",
                 color=COLOR_ERROR
             )
             await interaction.followup.send(embed=embed)
             return
 
-        # Extract fields
-        if "mal_id" in anime:  # Jikan
-            title_en = anime.get("title_english") or anime.get("title", "Unknown")
-            episodes = anime.get("episodes") or 0
-            dur_str = anime.get("duration", "")
-            per_ep = self.parse_duration(dur_str)
-        else:  # AniList
-            title_en = anime["title"].get("english") or anime["title"].get("romaji", "Unknown")
-            episodes = anime.get("episodes") or 0
-            per_ep = self.parse_duration(anime.get("duration"))
+        # Case 1: Single result → direct
+        if len(results) == 1:
+            await self.send_watchtime_single(interaction, results[0])
+            return
+
+        # Case 2: Multiple → dropdown
+        view = WatchtimeView(results, interaction.user.id, self)
+        msg = await interaction.followup.send(
+            f"🔍 Multiple results for **{title}**. Select one from the menu:",
+            view=view
+        )
+        view.message = msg
+
+    async def send_watchtime_single(self, interaction, media):
+        title = media.get("title", {}).get("english") or media.get("title", {}).get("romaji", "Unknown")
+        episodes = media.get("episodes") or 0
+        per_ep = self.parse_duration(media.get("duration"))
 
         if episodes <= 0:
-            episodes = 0
+            await interaction.followup.send("❌ Episode count not available.")
+            return
 
         total_min = episodes * per_ep
         total_h = round(total_min / 60, 1)
         total_d = round(total_h / 24, 1)
 
-        msg = f"""📺 {title_en}
+        msg = f"""📺 {title}
 🎬 Episodes: {episodes}
 ⏱️ Per Episode: {per_ep} min
 ─────────────────
 ⏱️ Total: {total_h} hours
-🕐 That's {total_d} days of your life! 😭"""
+📅 That's {total_d} days of your life! 😭"""
 
         await interaction.followup.send(msg)
 
