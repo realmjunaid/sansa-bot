@@ -12,7 +12,7 @@ from datetime import datetime
 from config import (
     BOT_TOKEN, BOT_PREFIX, BOT_NAME, BOT_VERSION,
     CHAT_CHANNEL_ID,
-    MANGA_CHANNEL_ID, ANIME_UPDATES_CHANNEL_ID, SAVE_CHANNEL_ID, COLOR_ERROR
+    ANIME_UPDATES_CHANNEL_ID, SAVE_CHANNEL_ID, COLOR_ERROR
 )
 
 # ── Logging Setup ──────────────────────────
@@ -86,26 +86,17 @@ async def on_interaction(interaction: discord.Interaction):
         channel_id = interaction.channel_id
         command_name = interaction.data.get("name", "")
 
-        special = {}
-
         chat_only = [
-            "image", "tag", "character", "top", "season",
-            "quiz", "memes", "quote", "fact", "help",
-            "ping", "status", "schedule", "count",
+            "anime", "character", "top", "season", "watchtime",
+            "manga",
+            "memes",
+            "quote", "fact", "quiz",
+            "help", "commands", "ping", "status", "schedule", "count",
             "epalert", "epremove", "alertlist", "myanime",
-            "nextrelease", "animecalendar", "weeklyanime", "trendinganime",
-            "watchtime"
+            "nextrelease", "animecalendar", "weeklyanime", "trendinganime"
         ]
 
-        if command_name in special:
-            if channel_id != special[command_name]:
-                embed = discord.Embed(
-                    description=f"❌ This command only works in <#{special[command_name]}>!",
-                    color=COLOR_ERROR
-                )
-                await interaction.response.send_message(embed=embed, ephemeral=True)
-                return
-        elif command_name in chat_only:
+        if command_name in chat_only:
             if channel_id != CHAT_CHANNEL_ID:
                 embed = discord.Embed(
                     description=f"❌ This command only works in <#{CHAT_CHANNEL_ID}>!",

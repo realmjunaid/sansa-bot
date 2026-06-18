@@ -10,7 +10,7 @@ import aiohttp
 import logging
 import json
 import os
-from datetime import datetime, timedelta
+from datetime import datetime
 from config import (
     CHAT_CHANNEL_ID, ANIME_UPDATES_CHANNEL_ID,
     COLOR_ANIME, COLOR_ERROR
@@ -79,16 +79,17 @@ class Alerts(commands.Cog):
         self.tracked = {}  # user_id str -> list of anime dicts
         self.last_weekly = None
         self.load_data()
-        self.check_episodes.start()
-        self.check_new_seasons.start()
-        self.update_trending.start()
-        self.weekly_report.start()
+        if ANIME_UPDATES_CHANNEL_ID != 0:
+            self.check_episodes.start()
+            self.check_new_seasons.start()
+            self.weekly_report.start()
+        else:
+            log.warning("ANIME_UPDATES_CHANNEL_ID=0, alert tasks disabled")
         log.info("✅ Alerts Cog loaded")
 
     def cog_unload(self):
         self.check_episodes.cancel()
         self.check_new_seasons.cancel()
-        self.update_trending.cancel()
         self.weekly_report.cancel()
 
     # ── Persistence ────────────────────────
@@ -440,6 +441,8 @@ class Alerts(commands.Cog):
     @tasks.loop(minutes=15)
     async def check_episodes(self):
         await self.bot.wait_until_ready()
+        if ANIME_UPDATES_CHANNEL_ID == 0:
+            return
         updates_ch = self.bot.get_channel(ANIME_UPDATES_CHANNEL_ID)
         if not updates_ch:
             return
@@ -511,6 +514,8 @@ class Alerts(commands.Cog):
     @tasks.loop(hours=6)
     async def check_new_seasons(self):
         await self.bot.wait_until_ready()
+        if ANIME_UPDATES_CHANNEL_ID == 0:
+            return
         updates_ch = self.bot.get_channel(ANIME_UPDATES_CHANNEL_ID)
         if not updates_ch:
             return
@@ -531,13 +536,10 @@ class Alerts(commands.Cog):
                     self.save_data()
 
     @tasks.loop(hours=24)
-    async def update_trending(self):
-        # refresh not needed
-        pass
-
-    @tasks.loop(hours=24)
     async def weekly_report(self):
         await self.bot.wait_until_ready()
+        if ANIME_UPDATES_CHANNEL_ID == 0:
+            return
         updates_ch = self.bot.get_channel(ANIME_UPDATES_CHANNEL_ID)
         if not updates_ch:
             return
