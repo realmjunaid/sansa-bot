@@ -13,7 +13,7 @@ from config import (
     BOT_TOKEN, BOT_PREFIX, BOT_NAME, BOT_VERSION,
     CHAT_CHANNEL_ID, WAIFU_CHANNEL_ID, ANIME_CHANNEL_ID,
     MANGA_CHANNEL_ID, HANIME_CHANNEL_ID, HDAD_CHANNEL_ID,
-    SAKUH_CHANNEL_ID, LUCI_CHANNEL_ID, STICKY_CHANNEL_ID, SAVE_CHANNEL_ID, COLOR_ERROR
+    SAKUH_CHANNEL_ID, LUCI_CHANNEL_ID, SAVE_CHANNEL_ID, COLOR_ERROR
 )
 
 # ── Logging Setup ──────────────────────────
@@ -53,7 +53,6 @@ COGS = [
     "cogs.hentaidad",
     "cogs.sakuh",
     "cogs.luci",
-    "cogs.sticky",
 ]
 
 # ── Channel Check ──────────────────────────
@@ -108,7 +107,6 @@ async def on_interaction(interaction: discord.Interaction):
             "hdad": HDAD_CHANNEL_ID,
             "saku": SAKUH_CHANNEL_ID,
             "luci": LUCI_CHANNEL_ID,
-            "sticky": STICKY_CHANNEL_ID,
         }
 
         chat_only = [

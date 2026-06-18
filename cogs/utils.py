@@ -118,7 +118,6 @@ class Utils(commands.Cog):
                 "**#memes-zone** — Anime meme every hour\n"
                 "**#hanime** — NSFW hentai every hour (12 images per post) + /hanime commands\n"
                 "**#hdad** — hentaidad.com hentai every hour (12 images per post)\n"
-                "**#sticky** — stickyhentai.com hentai every hour (15 images per post)\n"
                 "**#sakuh** — Sakuhentai images every hour (15 images of the same character)"
             ),
             inline=False
@@ -131,8 +130,6 @@ class Utils(commands.Cog):
                 "`/hanime <character>` — Search hentai by character/anime name\n"
                 "`/hdad` — Random hentai (12 images)\n"
                 "`/hdad <name>` — Search hentai by character/title\n"
-                "`/sticky` — Random hentai (15 images)\n"
-                "`/sticky <name>` — Search hentai by character/title\n"
                 "`/saku` — 15 images of the same character from Sakuhentai"
             ),
             inline=False
@@ -263,7 +260,6 @@ class Utils(commands.Cog):
         waifu_count = auto_cog.waifu_today if auto_cog else 0
         anime_count = auto_cog.anime_today if auto_cog else 0
         hzone_count = auto_cog.hzone_today if auto_cog else 0
-        sticky_count = auto_cog.sticky_today if auto_cog else 0
         manga_count = auto_cog.manga_today if auto_cog else 0
         memes_count = auto_cog.memes_today if auto_cog else 0
 
@@ -279,7 +275,6 @@ class Utils(commands.Cog):
         embed.add_field(name="🌸 Waifu Today", value=f"{waifu_count}/24", inline=True)
         embed.add_field(name="🎌 Anime Today", value=f"{anime_count}/24", inline=True)
         embed.add_field(name="🔞 Hzone Today", value=f"{hzone_count}/24", inline=True)
-        embed.add_field(name="🔞 Sticky Today", value=f"{sticky_count}/24", inline=True)
         embed.add_field(name="📚 Manga Today", value=f"{manga_count}/24", inline=True)
         embed.add_field(name="😂 Memes Today", value=f"{memes_count}/24", inline=True)
         embed.add_field(name="🐍 Python", value=platform.python_version(), inline=True)
@@ -335,7 +330,6 @@ class Utils(commands.Cog):
         anime_count = auto_cog.anime_today if auto_cog else 0
         hanime_count = auto_cog.hanime_today if auto_cog else 0
         hzone_count = auto_cog.hzone_today if auto_cog else 0
-        sticky_count = auto_cog.sticky_today if auto_cog else 0
         manga_count = auto_cog.manga_today if auto_cog else 0
         memes_count = auto_cog.memes_today if auto_cog else 0
 
@@ -362,11 +356,6 @@ class Utils(commands.Cog):
         embed.add_field(
             name="🔞 Hzone Posts (NSFW - hentaidad)",
             value=f"**{hzone_count}/24** (12 images each)\n{'▓' * hzone_count}{'░' * (24 - hzone_count)}",
-            inline=False
-        )
-        embed.add_field(
-            name="🔞 Sticky Posts (NSFW - stickyhentai)",
-            value=f"**{sticky_count}/24** (15 images each)\n{'▓' * sticky_count}{'░' * (24 - sticky_count)}",
             inline=False
         )
         embed.add_field(
