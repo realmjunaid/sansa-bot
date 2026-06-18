@@ -19,10 +19,16 @@ from config import STICKY_CHANNEL_ID, COLOR_ERROR
 log = logging.getLogger("SansaBot.Sticky")
 
 STICKY_HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
     "Accept-Language": "en-US,en;q=0.9",
+    "Accept-Encoding": "gzip, deflate, br",
     "Referer": "https://stickyhentai.com/",
+    "Connection": "keep-alive",
+    "Sec-Fetch-Dest": "document",
+    "Sec-Fetch-Mode": "navigate",
+    "Sec-Fetch-Site": "none",
+    "Upgrade-Insecure-Requests": "1",
 }
 
 BASE_URL = "https://stickyhentai.com"
@@ -38,15 +44,36 @@ def _create_scraper():
     )
 
 
+# Global scraper instance for better session/cookie reuse
+_scraper = _create_scraper()
+
+
 async def _cloud_get(url: str, headers: dict = None):
     loop = asyncio.get_event_loop()
-    scraper = _create_scraper()
+    hdrs = headers or STICKY_HEADERS
 
     def _sync_request():
-        return scraper.get(url, headers=headers or {}, timeout=25)
+        try:
+            return _scraper.get(url, headers=hdrs, timeout=25)
+        except Exception as e:
+            log.warning(f"Cloudscraper request failed for {url}: {e}")
+            return None
 
     resp = await loop.run_in_executor(None, _sync_request)
     return resp
+
+
+async def _warmup():
+    """Fetch homepage first to establish session/cookies"""
+    try:
+        await asyncio.sleep(random.uniform(0.3, 0.8))
+        resp = await _cloud_get(BASE_URL, STICKY_HEADERS)
+        if resp and resp.status_code == 200:
+            log.info("Sticky warmup successful")
+            return True
+    except Exception as e:
+        log.warning(f"Sticky warmup failed: {e}")
+    return False
 
 
 class Sticky(commands.Cog):
@@ -107,11 +134,18 @@ class Sticky(commands.Cog):
     async def scrape_random_gallery(self):
         """Pick random gallery from /hentai list and scrape."""
         try:
-            # Get list page
+            # Warm up session first
+            await _warmup()
+
+            # Try /hentai first
             resp = await _cloud_get(f"{BASE_URL}/hentai", STICKY_HEADERS)
-            if resp.status_code != 200:
-                log.warning(f"Sticky list status: {resp.status_code}")
-                return None
+            if not resp or resp.status_code != 200:
+                status = resp.status_code if resp else "No response"
+                log.warning(f"Sticky /hentai returned {status} (403 often means bot protection)")
+                # Fallback: try homepage
+                resp = await _cloud_get(BASE_URL, STICKY_HEADERS)
+                if not resp or resp.status_code != 200:
+                    return None
 
             html = resp.text
             soup = BeautifulSoup(html, "lxml")
@@ -125,22 +159,23 @@ class Sticky(commands.Cog):
                         gallery_links.append(full)
 
             if not gallery_links:
-                # fallback to home
-                resp = await _cloud_get(BASE_URL, STICKY_HEADERS)
-                if resp.status_code == 200:
-                    html = resp.text
-                    for m in re.finditer(r'href=["\'](/hentai/[^"\']+?)["\']', html, re.I):
-                        full = BASE_URL + m.group(1)
-                        if full not in gallery_links and len(full) > 20:
-                            gallery_links.append(full)
+                # fallback regex on home
+                for m in re.finditer(r'href=["\'](/hentai/[^"\']+?)["\']', html, re.I):
+                    full = BASE_URL + m.group(1)
+                    if full not in gallery_links and len(full) > 20:
+                        gallery_links.append(full)
 
             if not gallery_links:
+                log.warning("Sticky: No gallery links found on page")
                 return None
 
             random.shuffle(gallery_links)
-            for gal_url in gallery_links[:5]:
+            for gal_url in gallery_links[:6]:   # try a few more
+                await asyncio.sleep(random.uniform(0.4, 1.0))
                 g_resp = await _cloud_get(gal_url, STICKY_HEADERS)
-                if g_resp.status_code != 200:
+                if not g_resp or g_resp.status_code != 200:
+                    if g_resp and g_resp.status_code == 403:
+                        log.warning(f"Sticky gallery 403 blocked: {gal_url}")
                     continue
                 g_html = g_resp.text
                 character, images = await self._parse_gallery_page(g_html, gal_url)
@@ -158,12 +193,10 @@ class Sticky(commands.Cog):
     async def scrape_by_query(self, query: str):
         """Try to find gallery by searching via category or simple match."""
         try:
-            q = quote(query.strip())
-            search_url = f"{BASE_URL}/hentai?search={q}"  # may not exist, try anime tag fallback
-            # Fallback strategy: visit /anime/{slug} or just scrape /hentai and match text
+            await _warmup()
 
             resp = await _cloud_get(f"{BASE_URL}/hentai", STICKY_HEADERS)
-            if resp.status_code != 200:
+            if not resp or resp.status_code != 200:
                 return None
             html = resp.text
 
@@ -185,9 +218,10 @@ class Sticky(commands.Cog):
                     candidates.append((score, BASE_URL + href))
 
             candidates.sort(reverse=True)
-            for _, gal_url in candidates[:3]:
+            for _, gal_url in candidates[:4]:
+                await asyncio.sleep(random.uniform(0.3, 0.9))
                 g_resp = await _cloud_get(gal_url, STICKY_HEADERS)
-                if g_resp.status_code != 200:
+                if not g_resp or g_resp.status_code != 200:
                     continue
                 character, images = await self._parse_gallery_page(g_resp.text, gal_url)
                 if images and len(images) >= 5:
@@ -219,6 +253,7 @@ class Sticky(commands.Cog):
             post = await self.get_random_sticky_post()
 
         if not post or not post.get("images"):
+            log.warning("Sticky command: No images returned (likely 403 or empty page)")
             embed = discord.Embed(
                 description="❌ No results found. Try a different name or try again.",
                 color=COLOR_ERROR

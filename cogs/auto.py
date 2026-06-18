@@ -455,6 +455,7 @@ class Auto(commands.Cog):
 
         post = await sticky_cog.get_random_sticky_post()
         if not post or not post.get("images"):
+            log.warning("Auto sticky: No post/images (check sticky cog for 403)")
             return
 
         self.sticky_count_today += 1
