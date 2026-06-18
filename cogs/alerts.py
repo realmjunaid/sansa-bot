@@ -515,7 +515,7 @@ class Alerts(commands.Cog):
         if not updates_ch:
             return
         # simple: re-search tracked and see season change
-        for uid, animes in self.tracked.items():
+        for uid, animes in list(self.tracked.items()):
             for a in animes:
                 media = await self.fetch_anime_by_id(a["id"])
                 if not media:
@@ -550,7 +550,7 @@ class Alerts(commands.Cog):
         # build from all tracked recent eps
         embed = discord.Embed(title="📅 Weekly Anime Report", color=COLOR_ANIME)
         total = 0
-        for uid, animes in self.tracked.items():
+        for uid, animes in list(self.tracked.items()):
             for a in animes:
                 if a.get("current_ep"):
                     season = f"\n🎭 {a.get('season')}" if a.get("season") else ""

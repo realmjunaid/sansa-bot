@@ -23,6 +23,7 @@ query ($search: String) {
     title { romaji english }
     description(asHtml: false)
     episodes
+    duration
     averageScore
     genres
     status
@@ -148,6 +149,18 @@ class Anime(commands.Cog):
         except Exception as e:
             log.warning(f"Jikan request failed for {endpoint}: {e}")
         return None
+
+    def parse_duration(self, dur):
+        if not dur:
+            return 24
+        if isinstance(dur, (int, float)):
+            return int(dur)
+        try:
+            nums = ''.join(c for c in str(dur) if c.isdigit())
+            val = int(nums) if nums else 24
+            return val if 1 <= val <= 120 else 24
+        except:
+            return 24
 
     # ── /anime (random) ────────────────────
     @app_commands.command(name="anime", description="🎌 Get details for a random or specific anime (MyAnimeList)")
@@ -492,6 +505,62 @@ class Anime(commands.Cog):
             embed.set_thumbnail(url=thumb)
 
         await interaction.followup.send(embed=embed)
+
+    # ── /watchtime ─────────────────────────
+    @app_commands.command(name="watchtime", description="Calculate total watch time for an anime")
+    @app_commands.describe(title="Anime title")
+    async def watchtime(self, interaction: discord.Interaction, title: str):
+        if not await self.check_channel(interaction):
+            return
+
+        await interaction.response.defer()
+
+        # Try Jikan first
+        data = await self.jikan_request(f"anime?q={title}&limit=1")
+        anime = None
+
+        if data and data.get("data"):
+            anime = data["data"][0]
+        else:
+            # Fallback to AniList
+            data = await self.anilist_request(SEARCH_ANIME_QUERY, {"search": title})
+            if data and data.get("data", {}).get("Media"):
+                anime = data["data"]["Media"]
+
+        if not anime:
+            embed = discord.Embed(
+                description=f"❌ No anime found with the name **{title}**!",
+                color=COLOR_ERROR
+            )
+            await interaction.followup.send(embed=embed)
+            return
+
+        # Extract fields
+        if "mal_id" in anime:  # Jikan
+            title_en = anime.get("title_english") or anime.get("title", "Unknown")
+            episodes = anime.get("episodes") or 0
+            dur_str = anime.get("duration", "")
+            per_ep = self.parse_duration(dur_str)
+        else:  # AniList
+            title_en = anime["title"].get("english") or anime["title"].get("romaji", "Unknown")
+            episodes = anime.get("episodes") or 0
+            per_ep = self.parse_duration(anime.get("duration"))
+
+        if episodes <= 0:
+            episodes = 0
+
+        total_min = episodes * per_ep
+        total_h = round(total_min / 60, 1)
+        total_d = round(total_h / 24, 1)
+
+        msg = f"""📺 {title_en}
+🎬 Episodes: {episodes}
+⏱️ Per Episode: {per_ep} min
+─────────────────
+⏱️ Total: {total_h} hours
+🕐 That's {total_d} days of your life! 😭"""
+
+        await interaction.followup.send(msg)
 
 
 async def setup(bot):

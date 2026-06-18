@@ -62,7 +62,7 @@ query ($page: Int) {
 class Manga(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        log.info(f"✅ Manga Cog loaded (MANGA_CHANNEL_ID={MANGA_CHANNEL_ID})")
+        log.info("✅ Manga Cog loaded (commands in #anime-chat)")
 
     # ── Channel Check ──────────────────────
     async def check_channel(self, interaction: discord.Interaction) -> bool:

@@ -93,7 +93,8 @@ async def on_interaction(interaction: discord.Interaction):
             "quiz", "memes", "quote", "fact", "help",
             "ping", "status", "schedule", "count",
             "epalert", "epremove", "alertlist", "myanime",
-            "nextrelease", "animecalendar", "weeklyanime", "trendinganime"
+            "nextrelease", "animecalendar", "weeklyanime", "trendinganime",
+            "watchtime"
         ]
 
         if command_name in special:
