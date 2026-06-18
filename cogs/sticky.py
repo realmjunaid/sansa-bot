@@ -66,13 +66,12 @@ async def _cloud_get(url: str, headers: dict = None):
 async def _warmup():
     """Fetch homepage first to establish session/cookies"""
     try:
-        await asyncio.sleep(random.uniform(0.3, 0.8))
+        await asyncio.sleep(random.uniform(0.2, 0.6))
         resp = await _cloud_get(BASE_URL, STICKY_HEADERS)
-        if resp and resp.status_code == 200:
-            log.info("Sticky warmup successful")
+        if resp and getattr(resp, 'status_code', 0) == 200:
             return True
-    except Exception as e:
-        log.warning(f"Sticky warmup failed: {e}")
+    except Exception:
+        pass
     return False
 
 
@@ -236,7 +235,58 @@ class Sticky(commands.Cog):
             return None
 
     async def get_random_sticky_post(self):
-        return await self.scrape_random_gallery()
+        # First try gallery method
+        post = await self.scrape_random_gallery()
+        if post and post.get("images"):
+            return post
+
+        # Fallback: directly scrape images from homepage (more reliable)
+        log.info("Sticky: Falling back to homepage image scrape")
+        return await self.scrape_home_images()
+
+    async def scrape_home_images(self):
+        """Simple & reliable: grab many images directly from homepage"""
+        try:
+            await _warmup()
+            resp = await _cloud_get(BASE_URL, STICKY_HEADERS)
+            if not resp or resp.status_code != 200:
+                # Last resort: try with plain requests (sometimes bypasses)
+                try:
+                    import requests
+                    r = requests.get(BASE_URL, headers=STICKY_HEADERS, timeout=20)
+                    if r.status_code == 200:
+                        resp = r
+                    else:
+                        return None
+                except Exception:
+                    return None
+
+            if not resp:
+                return None
+
+            html = resp.text if hasattr(resp, 'text') else resp.content.decode('utf-8', errors='ignore')
+
+            images = re.findall(
+                r'https?://cdn\.stickyhentai\.com/uploads/[^"\'\s<>]+\.(?:webp|jpg|jpeg|png)',
+                html, re.I
+            )
+            images = list(dict.fromkeys(images))  # dedupe while preserving order
+
+            if len(images) < 8:
+                log.warning(f"Sticky home: only {len(images)} images found")
+                return None
+
+            random.shuffle(images)
+            selected = images[:15]
+
+            return {
+                "character": "Sticky Hentai",
+                "images": selected,
+                "source_url": BASE_URL
+            }
+        except Exception as e:
+            log.warning(f"Sticky home scrape error: {e}")
+            return None
 
     # ── /sticky Command ───────────────────────
     @app_commands.command(name="sticky", description="🔞 Get random hentai images (stickyhentai.com)")
