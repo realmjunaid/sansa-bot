@@ -730,10 +730,10 @@ class Anime(commands.Cog):
             return
 
         sites = [
-            {"name": "Enma", "search": "https://www.enma.lol/search?keyword={q}", "domain": "enma.lol"},
-            {"name": "Animetsu", "search": "https://animetsu.live/search?q={q}", "domain": "animetsu.live"},
-            {"name": "Reanime", "search": "https://reanime.to/search?keyword={q}", "domain": "reanime.to"},
-            {"name": "Anikoto", "search": "https://anikototv.to/filter?keyword={q}", "domain": "anikototv.to"},
+            {"name": "Enma", "searches": ["https://www.enma.lol/search?keyword={q}"], "domain": "enma.lol"},
+            {"name": "Animetsu", "searches": ["https://animetsu.live/search?q={q}", "https://animetsu.live/?q={q}"], "domain": "animetsu.live"},
+            {"name": "Reanime", "searches": ["https://reanime.to/search?keyword={q}", "https://reanime.to/?search={q}"], "domain": "reanime.to"},
+            {"name": "Anikoto", "searches": ["https://anikototv.to/filter?keyword={q}"], "domain": "anikototv.to"},
         ]
 
         embed = discord.Embed(
@@ -744,29 +744,27 @@ class Anime(commands.Cog):
 
         async def find_link(site):
             q = quote_plus(title)
-            search_url = site["search"].format(q=q)
             loop = asyncio.get_running_loop()
 
-            def _scrape():
+            def _scrape_one(url):
                 try:
                     scraper = cloudscraper.create_scraper(browser={"browser": "chrome", "platform": "windows", "mobile": False})
-                    resp = scraper.get(search_url, timeout=10)
+                    resp = scraper.get(url, timeout=8)
                     if resp.status_code != 200:
                         return None
                     soup = BeautifulSoup(resp.text, "lxml")
                     return self._pick_best_match(soup, title, site["domain"])
                 except Exception as e:
-                    log.warning(f"watchlink scrape error for {site['name']}: {e}")
+                    log.warning(f"watchlink {site['name']} {url} err: {e}")
                     return None
 
-            try:
-                link = await loop.run_in_executor(None, _scrape)
+            for tmpl in site.get("searches", [site.get("search", "")]):
+                search_url = tmpl.format(q=q)
+                link = await loop.run_in_executor(None, _scrape_one, search_url)
                 if link:
                     return site["name"], link
-                else:
-                    return site["name"], search_url
-            except Exception:
-                return site["name"], search_url
+            # all failed → search link
+            return site["name"], site["searches"][0].format(q=q)
 
         tasks = [find_link(s) for s in sites]
         results = await asyncio.gather(*tasks, return_exceptions=True)
