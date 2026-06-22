@@ -792,31 +792,37 @@ class Anime(commands.Cog):
         title_l = title.lower().strip()
         key_words = [w for w in title_l.split() if len(w) >= 3]
         candidates = []
+        good_paths = ("/watch/", "/anime/", "/play/", "/series/", "/stream/", "/detail/", "/title/", "/movie/")
 
-        for a in soup.find_all("a", href=True)[:60]:
+        for a in soup.find_all("a", href=True)[:80]:
             href = a["href"].strip()
-            if not href or href == "#" or "javascript" in href:
+            if not href or href == "#" or "javascript" in href.lower():
                 continue
             if href.startswith("/"):
                 href = f"https://{domain}{href}"
             if domain not in href:
                 continue
             # ignore nav/search pages
-            bad = ["/search", "/filter", "/home", "/login", "/register", "/genre", "/type"]
+            bad = ["/search", "/filter", "/home", "/login", "/register", "/genre", "/type", "/tag", "/category"]
             if any(b in href for b in bad):
                 continue
             txt = (a.get_text() or "").strip()
             if not txt:
-                txt = a.get("title", "") or a.get("aria-label", "")
+                txt = a.get("title", "") or a.get("aria-label", "") or a.get("data-title", "")
             txt_l = txt.lower()
-            if not txt_l:
-                continue
 
+            # also score slug in url
+            slug = href.split("/")[-1].lower().replace("-", " ").replace("_", " ")
             score = difflib.SequenceMatcher(None, title_l, txt_l).ratio()
-            if any(kw in txt_l for kw in key_words):
-                score += 0.25
-            if score >= 0.28:
-                candidates.append((score, href, txt[:60]))
+            score += difflib.SequenceMatcher(None, title_l, slug).ratio() * 0.6
+
+            if any(kw in txt_l or kw in slug for kw in key_words):
+                score += 0.3
+            # boost if good anime path
+            if any(p in href for p in good_paths):
+                score += 0.15
+            if score >= 0.22:
+                candidates.append((score, href, (txt or slug)[:70]))
 
         if candidates:
             candidates.sort(reverse=True)
