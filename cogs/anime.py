@@ -707,7 +707,7 @@ class Anime(commands.Cog):
         await interaction.followup.send(embed=embed)
 
     # ── /watchlink ─────────────────────────
-    @app_commands.command(name="watchlink", description="🔗 Get direct watch page links from supported anime sites")
+    @app_commands.command(name="watchlink", description="🔗 Get direct watch page links (enma + anikoto)")
     @app_commands.describe(title="Anime title")
     async def watchlink(self, interaction: discord.Interaction, title: str):
         if not await self.check_channel(interaction):
@@ -719,8 +719,6 @@ class Anime(commands.Cog):
             # Fallback if no scraper
             sites = {
                 "Enma": f"https://www.enma.lol/search?keyword={quote_plus(title)}",
-                "Animetsu": f"https://animetsu.live/search?q={quote_plus(title)}",
-                "Reanime": f"https://reanime.to/search?keyword={quote_plus(title)}",
                 "Anikoto": f"https://anikototv.to/filter?keyword={quote_plus(title)}",
             }
             embed = discord.Embed(title=f"🔗 Watch Links — {title}", color=COLOR_ANIME)
@@ -731,14 +729,12 @@ class Anime(commands.Cog):
 
         sites = [
             {"name": "Enma", "searches": ["https://www.enma.lol/search?keyword={q}"], "domain": "enma.lol"},
-            {"name": "Animetsu", "searches": ["https://animetsu.live/search?q={q}", "https://animetsu.live/?q={q}"], "domain": "animetsu.live"},
-            {"name": "Reanime", "searches": ["https://reanime.to/search?keyword={q}", "https://reanime.to/?search={q}"], "domain": "reanime.to"},
             {"name": "Anikoto", "searches": ["https://anikototv.to/filter?keyword={q}"], "domain": "anikototv.to"},
         ]
 
         embed = discord.Embed(
             title=f"🔗 Watch Links — {title}",
-            description="Scraped from sites (may fall back to search if direct match fails)",
+            description="Direct links from working sites (search fallback if needed)",
             color=COLOR_ANIME
         )
 

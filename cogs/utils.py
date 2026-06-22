@@ -53,7 +53,7 @@ class Utils(commands.Cog):
                 "`/top` — Top 10 Anime (MyAnimeList)\n"
                 "`/season` — Current season anime list\n"
                 "`/watchtime <title>` — Total watch time calculator\n"
-                "`/watchlink <title>` — Find streaming page links from enma/animetsu/reanime/anikoto"
+                "`/watchlink <title>` — Find streaming page links (enma, anikoto)"
             ),
             inline=False
         )
