@@ -52,7 +52,8 @@ class Utils(commands.Cog):
                 "`/character <name>` — Character details + image\n"
                 "`/top` — Top 10 Anime (MyAnimeList)\n"
                 "`/season` — Current season anime list\n"
-                "`/watchtime <title>` — Total watch time calculator"
+                "`/watchtime <title>` — Total watch time calculator\n"
+                "`/watchlink <title>` — Find streaming page links from enma/animetsu/reanime/anikoto"
             ),
             inline=False
         )

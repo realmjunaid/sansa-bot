@@ -1,6 +1,6 @@
 # ============================================
 #   Sansa Bot — Anime Cog
-#   Commands: /anime, /anime <title>, /character, /top, /season
+#   Commands: /anime, /anime <title>, /character, /top, /season, /watchtime, /watchlink
 # ============================================
 
 import discord
@@ -9,9 +9,19 @@ from discord import app_commands
 import aiohttp
 import logging
 import random
+import asyncio
+import difflib
+from urllib.parse import quote_plus
 from config import (
     CHAT_CHANNEL_ID, COLOR_ANIME, COLOR_ERROR
 )
+
+try:
+    import cloudscraper
+    from bs4 import BeautifulSoup
+except ImportError:
+    cloudscraper = None
+    BeautifulSoup = None
 
 log = logging.getLogger("SansaBot.Anime")
 
@@ -696,6 +706,124 @@ class Anime(commands.Cog):
 
         await interaction.followup.send(embed=embed)
 
+    # ── /watchlink ─────────────────────────
+    @app_commands.command(name="watchlink", description="🔗 Get direct watch page links from supported anime sites")
+    @app_commands.describe(title="Anime title")
+    async def watchlink(self, interaction: discord.Interaction, title: str):
+        if not await self.check_channel(interaction):
+            return
+
+        await interaction.response.defer()
+
+        if not cloudscraper or not BeautifulSoup:
+            # Fallback if no scraper
+            sites = {
+                "Enma": f"https://www.enma.lol/search?keyword={quote_plus(title)}",
+                "Animetsu": f"https://animetsu.live/search?q={quote_plus(title)}",
+                "Reanime": f"https://reanime.to/search?keyword={quote_plus(title)}",
+                "Anikoto": f"https://anikototv.to/filter?keyword={quote_plus(title)}",
+            }
+            embed = discord.Embed(title=f"🔗 Watch Links — {title}", color=COLOR_ANIME)
+            for name, url in sites.items():
+                embed.add_field(name=name, value=f"[Search]({url})", inline=False)
+            await interaction.followup.send(embed=embed)
+            return
+
+        sites = [
+            {"name": "Enma", "search": "https://www.enma.lol/search?keyword={q}", "domain": "enma.lol"},
+            {"name": "Animetsu", "search": "https://animetsu.live/search?q={q}", "domain": "animetsu.live"},
+            {"name": "Reanime", "search": "https://reanime.to/search?keyword={q}", "domain": "reanime.to"},
+            {"name": "Anikoto", "search": "https://anikototv.to/filter?keyword={q}", "domain": "anikototv.to"},
+        ]
+
+        embed = discord.Embed(
+            title=f"🔗 Watch Links — {title}",
+            description="Scraped from sites (may fall back to search if direct match fails)",
+            color=COLOR_ANIME
+        )
+
+        async def find_link(site):
+            q = quote_plus(title)
+            search_url = site["search"].format(q=q)
+            loop = asyncio.get_running_loop()
+
+            def _scrape():
+                try:
+                    scraper = cloudscraper.create_scraper(browser={"browser": "chrome", "platform": "windows", "mobile": False})
+                    resp = scraper.get(search_url, timeout=10)
+                    if resp.status_code != 200:
+                        return None
+                    soup = BeautifulSoup(resp.text, "lxml")
+                    return self._pick_best_match(soup, title, site["domain"])
+                except Exception as e:
+                    log.warning(f"watchlink scrape error for {site['name']}: {e}")
+                    return None
+
+            try:
+                link = await loop.run_in_executor(None, _scrape)
+                if link:
+                    return site["name"], link
+                else:
+                    return site["name"], search_url
+            except Exception:
+                return site["name"], search_url
+
+        tasks = [find_link(s) for s in sites]
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+
+        for item in results:
+            if isinstance(item, Exception):
+                continue
+            name, url = item
+            if url.startswith("http"):
+                if "/search" in url or "/filter" in url:
+                    val = f"[🔍 Search]({url})"
+                else:
+                    val = f"[▶️ Watch]({url})"
+            else:
+                val = url
+            embed.add_field(name=name, value=val, inline=False)
+
+        await interaction.followup.send(embed=embed)
+
+    def _pick_best_match(self, soup, title: str, domain: str):
+        if not soup:
+            return None
+        title_l = title.lower().strip()
+        key_words = [w for w in title_l.split() if len(w) >= 3]
+        candidates = []
+
+        for a in soup.find_all("a", href=True)[:60]:
+            href = a["href"].strip()
+            if not href or href == "#" or "javascript" in href:
+                continue
+            if href.startswith("/"):
+                href = f"https://{domain}{href}"
+            if domain not in href:
+                continue
+            # ignore nav/search pages
+            bad = ["/search", "/filter", "/home", "/login", "/register", "/genre", "/type"]
+            if any(b in href for b in bad):
+                continue
+            txt = (a.get_text() or "").strip()
+            if not txt:
+                txt = a.get("title", "") or a.get("aria-label", "")
+            txt_l = txt.lower()
+            if not txt_l:
+                continue
+
+            score = difflib.SequenceMatcher(None, title_l, txt_l).ratio()
+            if any(kw in txt_l for kw in key_words):
+                score += 0.25
+            if score >= 0.28:
+                candidates.append((score, href, txt[:60]))
+
+        if candidates:
+            candidates.sort(reverse=True)
+            return candidates[0][1]
+        return None
+
 
 async def setup(bot):
     await bot.add_cog(Anime(bot))
+

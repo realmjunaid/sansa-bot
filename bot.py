@@ -87,7 +87,7 @@ async def on_interaction(interaction: discord.Interaction):
         command_name = interaction.data.get("name", "")
 
         chat_only = [
-            "anime", "character", "top", "season", "watchtime",
+            "anime", "character", "top", "season", "watchtime", "watchlink",
             "manga",
             "memes",
             "quote", "fact", "quiz",
