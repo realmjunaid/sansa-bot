@@ -42,7 +42,11 @@ class Memes(commands.Cog):
     async def fetch_meme(self, sort: str = "hot"):
         for attempt in range(3):
             subreddit = random.choice(REDDIT_SUBREDDITS)
+<<<<<<< HEAD
             url = f"https://meme-api.com/gimme/{subreddit}/{sort}"
+=======
+            url = f"https://meme-api.com/gimme/{subreddit}"
+>>>>>>> 097fcf874c8a1bda660e90da00244b2bb35e86aa
             try:
                 async with aiohttp.ClientSession() as session:
                     async with session.get(url, timeout=aiohttp.ClientTimeout(total=8)) as resp:

@@ -10,7 +10,11 @@ import asyncio
 import logging
 import random
 import re
+<<<<<<< HEAD
 from datetime import datetime, timezone
+=======
+from datetime import datetime
+>>>>>>> 097fcf874c8a1bda660e90da00244b2bb35e86aa
 from config import (
     ANIME_CHANNEL_ID,
     MANGA_CHANNEL_ID, MEMES_CHANNEL_ID,
@@ -44,7 +48,11 @@ class Auto(commands.Cog):
         self.anime_count_today = 0
         self.manga_count_today = 0
         self.memes_count_today = 0
+<<<<<<< HEAD
         self.last_reset = datetime.now(timezone.utc).date()
+=======
+        self.last_reset = datetime.utcnow().date()
+>>>>>>> 097fcf874c8a1bda660e90da00244b2bb35e86aa
 
         self.auto_anime.start()
         self.auto_manga.start()
@@ -58,7 +66,11 @@ class Auto(commands.Cog):
 
     # ── Daily Count Reset ──────────────────
     def check_reset(self):
+<<<<<<< HEAD
         today = datetime.now(timezone.utc).date()
+=======
+        today = datetime.utcnow().date()
+>>>>>>> 097fcf874c8a1bda660e90da00244b2bb35e86aa
         if today != self.last_reset:
             self.anime_count_today = 0
             self.manga_count_today = 0
@@ -139,7 +151,11 @@ class Auto(commands.Cog):
             description=f"*{title_jp}*\n\n{desc}",
             color=COLOR_ANIME,
             url=anime.get("siteUrl", ""),
+<<<<<<< HEAD
             timestamp=datetime.now(timezone.utc)
+=======
+            timestamp=datetime.utcnow()
+>>>>>>> 097fcf874c8a1bda660e90da00244b2bb35e86aa
         )
         embed.add_field(name="⭐ Score", value=f"{anime.get('averageScore', 'N/A')}/100", inline=True)
         embed.add_field(name="📺 Episodes", value=str(anime.get("episodes", "N/A")), inline=True)
@@ -187,7 +203,11 @@ class Auto(commands.Cog):
             description=f"*{title_jp}*\n\n{desc}",
             color=COLOR_MANGA,
             url=manga.get("siteUrl", ""),
+<<<<<<< HEAD
             timestamp=datetime.now(timezone.utc)
+=======
+            timestamp=datetime.utcnow()
+>>>>>>> 097fcf874c8a1bda660e90da00244b2bb35e86aa
         )
         embed.add_field(name="⭐ Score", value=f"{manga.get('averageScore', 'N/A')}/100", inline=True)
         embed.add_field(name="📖 Chapters", value=str(manga.get("chapters", "N/A")), inline=True)

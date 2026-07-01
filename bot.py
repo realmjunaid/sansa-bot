@@ -8,7 +8,11 @@ from discord.ext import commands
 import asyncio
 import os
 import logging
+<<<<<<< HEAD
 from datetime import datetime, timezone
+=======
+from datetime import datetime
+>>>>>>> 097fcf874c8a1bda660e90da00244b2bb35e86aa
 from config import (
     BOT_TOKEN, BOT_PREFIX, BOT_NAME, BOT_VERSION,
     CHAT_CHANNEL_ID,
@@ -37,7 +41,11 @@ bot = commands.Bot(
 )
 
 # ── Start Time ─────────────────────────────
+<<<<<<< HEAD
 bot.start_time = datetime.now(timezone.utc)
+=======
+bot.start_time = datetime.utcnow()
+>>>>>>> 097fcf874c8a1bda660e90da00244b2bb35e86aa
 
 # ── Cogs List ──────────────────────────────
 COGS = [
@@ -109,6 +117,7 @@ async def on_interaction(interaction: discord.Interaction):
     # Commands are handled automatically by the library.
 
 @bot.event
+<<<<<<< HEAD
 async def on_app_command_error(interaction: discord.Interaction, error: discord.app_commands.AppCommandError):
     log.error(f"Slash command error: {error}")
     if not interaction.response.is_done():
@@ -116,6 +125,10 @@ async def on_app_command_error(interaction: discord.Interaction, error: discord.
             embed=discord.Embed(description=f"❌ Error: {error}", color=COLOR_ERROR),
             ephemeral=True
         )
+=======
+async def on_command_error(ctx, error):
+    log.error(f"Command error: {error}")
+>>>>>>> 097fcf874c8a1bda660e90da00244b2bb35e86aa
 
 
 # ── Save / Unsave Feature (❤️ & ❌) ─────────────────────────────
