@@ -10,11 +10,7 @@ import aiohttp
 import logging
 import json
 import os
-<<<<<<< HEAD
 from datetime import datetime, timezone
-=======
-from datetime import datetime
->>>>>>> 097fcf874c8a1bda660e90da00244b2bb35e86aa
 from config import (
     CHAT_CHANNEL_ID, ANIME_UPDATES_CHANNEL_ID,
     COLOR_ANIME, COLOR_ERROR
@@ -92,18 +88,12 @@ class Alerts(commands.Cog):
         log.info("✅ Alerts Cog loaded")
 
     def cog_unload(self):
-<<<<<<< HEAD
         if self.check_episodes.is_running():
             self.check_episodes.cancel()
         if self.check_new_seasons.is_running():
             self.check_new_seasons.cancel()
         if self.weekly_report.is_running():
             self.weekly_report.cancel()
-=======
-        self.check_episodes.cancel()
-        self.check_new_seasons.cancel()
-        self.weekly_report.cancel()
->>>>>>> 097fcf874c8a1bda660e90da00244b2bb35e86aa
 
     # ── Persistence ────────────────────────
     def load_data(self):
@@ -164,12 +154,7 @@ class Alerts(commands.Cog):
         return None
 
     async def fetch_trending(self):
-<<<<<<< HEAD
         now = datetime.now(timezone.utc)
-=======
-        from datetime import datetime as dt
-        now = dt.utcnow()
->>>>>>> 097fcf874c8a1bda660e90da00244b2bb35e86aa
         month = now.month
         year = now.year
         season_map = {
@@ -267,11 +252,7 @@ class Alerts(commands.Cog):
             "airing_at": airing_at,
             "status": media.get("status", "Unknown"),
             "score": media.get("averageScore"),
-<<<<<<< HEAD
             "last_checked": datetime.now(timezone.utc).isoformat()
-=======
-            "last_checked": datetime.utcnow().isoformat()
->>>>>>> 097fcf874c8a1bda660e90da00244b2bb35e86aa
         }
         self.tracked[uid].append(record)
         self.save_data()
@@ -370,11 +351,7 @@ class Alerts(commands.Cog):
             return
 
         embed = discord.Embed(title="⏰ Upcoming Episodes", color=COLOR_ANIME)
-<<<<<<< HEAD
         now = datetime.now(timezone.utc).timestamp()
-=======
-        now = datetime.utcnow().timestamp()
->>>>>>> 097fcf874c8a1bda660e90da00244b2bb35e86aa
         for a in lst:
             if a.get("next_ep") and a.get("airing_at"):
                 ts = a["airing_at"]
@@ -472,11 +449,7 @@ class Alerts(commands.Cog):
         if not updates_ch:
             return
 
-<<<<<<< HEAD
         now = datetime.now(timezone.utc).timestamp()
-=======
-        now = datetime.utcnow().timestamp()
->>>>>>> 097fcf874c8a1bda660e90da00244b2bb35e86aa
         changed = False
         for uid, animes in list(self.tracked.items()):
             for a in animes:
@@ -572,11 +545,7 @@ class Alerts(commands.Cog):
         updates_ch = self.bot.get_channel(ANIME_UPDATES_CHANNEL_ID)
         if not updates_ch:
             return
-<<<<<<< HEAD
         now = datetime.now(timezone.utc)
-=======
-        now = datetime.utcnow()
->>>>>>> 097fcf874c8a1bda660e90da00244b2bb35e86aa
         if now.weekday() != 4:  # Friday = 4
             return
         if self.last_weekly and (now - self.last_weekly).days < 6:

@@ -180,7 +180,7 @@ class WatchtimeView(discord.ui.View):
                 idx = int(value)
                 media = self.results[idx]
                 await self.show_single(interaction, media)
-            except:
+            except (ValueError, IndexError):
                 await interaction.response.send_message("❌ Invalid selection.", ephemeral=True)
                 return
 
@@ -244,7 +244,7 @@ class WatchtimeView(discord.ui.View):
         if self.message:
             try:
                 await self.message.edit(content="⏰ Time's up!\nMenu expired. আবার /watchtime দাও।", view=None)
-            except:
+            except discord.HTTPException:
                 pass
 
 
@@ -301,7 +301,7 @@ class Anime(commands.Cog):
             nums = ''.join(c for c in str(dur) if c.isdigit())
             val = int(nums) if nums else 24
             return val if 1 <= val <= 120 else 24
-        except:
+        except (ValueError, TypeError):
             return 24
 
     # ── /anime (random) ────────────────────
@@ -373,12 +373,8 @@ class Anime(commands.Cog):
                 color=COLOR_ANIME,
                 url=site_url
             )
-<<<<<<< HEAD
             score_suffix = "/10" if "mal_id" in anime else "/100"
             embed.add_field(name="⭐ Score", value=f"{score}{score_suffix}", inline=True)
-=======
-            embed.add_field(name="⭐ Score", value=f"{score}/100", inline=True)
->>>>>>> 097fcf874c8a1bda660e90da00244b2bb35e86aa
             embed.add_field(name="📺 Episodes", value=str(episodes), inline=True)
             embed.add_field(name="📊 Status", value=status, inline=True)
             embed.add_field(name="📅 Year", value=str(year), inline=True)
@@ -432,21 +428,14 @@ class Anime(commands.Cog):
             if desc and len(desc) > 350:
                 desc = desc[:350] + "..."
 
-<<<<<<< HEAD
             score_suffix = "/10" if "mal_id" in anime else "/100"
-=======
->>>>>>> 097fcf874c8a1bda660e90da00244b2bb35e86aa
             embed = discord.Embed(
                 title=f"🎲 Random Anime — {title_en}",
                 description=f"*{title_jp}*\n\n{desc}",
                 color=COLOR_ANIME,
                 url=site_url
             )
-<<<<<<< HEAD
             embed.add_field(name="⭐ Score", value=f"{score}{score_suffix}", inline=True)
-=======
-            embed.add_field(name="⭐ Score", value=f"{score}/100", inline=True)
->>>>>>> 097fcf874c8a1bda660e90da00244b2bb35e86aa
             embed.add_field(name="📺 Episodes", value=str(episodes), inline=True)
             embed.add_field(name="📅 Year", value=str(year), inline=True)
             embed.add_field(name="🎭 Genres", value=genres, inline=False)
@@ -572,16 +561,10 @@ class Anime(commands.Cog):
                 genres = ", ".join(anime.get("genres", [])[:2])
                 image_url = anime.get("coverImage", {}).get("large")
 
-<<<<<<< HEAD
             score_suffix = "/10" if "mal_id" in anime else "/100"
             embed.add_field(
                 name=f"{i}. {title_en}",
                 value=f"⭐ {score}{score_suffix} | 🎭 {genres}",
-=======
-            embed.add_field(
-                name=f"{i}. {title_en}",
-                value=f"⭐ {score}/100 | 🎭 {genres}",
->>>>>>> 097fcf874c8a1bda660e90da00244b2bb35e86aa
                 inline=False
             )
 
@@ -598,13 +581,8 @@ class Anime(commands.Cog):
 
         await interaction.response.defer()
 
-<<<<<<< HEAD
         from datetime import datetime, timezone
         now = datetime.now(timezone.utc)
-=======
-        from datetime import datetime
-        now = datetime.utcnow()
->>>>>>> 097fcf874c8a1bda660e90da00244b2bb35e86aa
         month = now.month
         year = now.year
 
@@ -657,16 +635,10 @@ class Anime(commands.Cog):
                 title_en = anime["title"].get("english") or anime["title"].get("romaji", "Unknown")
                 score = anime.get("averageScore", "N/A")
 
-<<<<<<< HEAD
             score_suffix = "/10" if "mal_id" in anime else "/100"
             embed.add_field(
                 name=f"{i}. {title_en}",
                 value=f"⭐ {score}{score_suffix}",
-=======
-            embed.add_field(
-                name=f"{i}. {title_en}",
-                value=f"⭐ {score}/100",
->>>>>>> 097fcf874c8a1bda660e90da00244b2bb35e86aa
                 inline=True
             )
 
