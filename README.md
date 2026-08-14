@@ -7,7 +7,7 @@
 | **Version** | 1.0.0 |
 | **Language** | Python 3.10+ |
 | **Library** | [discord.py](https://github.com/Rapptz/discord.py) 2.x |
-| **Data source** | [MyAnimeList API](https://myanimelist.net/apiconfig) (primary) · Jikan / AniList (fallback) |
+| **Data source** | [MyAnimeList API](https://myanimelist.net/apiconfig) (primary) · [Jikan](https://jikan.moe) (unofficial MAL fallback) |
 
 ---
 
@@ -230,7 +230,7 @@ When you see logs like `Sansa Bot is online!` and `Synced N slash command(s)`, t
 2. Create an API client / app
 3. Copy the **Client ID** into `MAL_CLIENT_ID`
 
-If `MAL_CLIENT_ID` is missing, the bot still runs and falls back to **Jikan** (unofficial MAL mirror) and **AniList** where possible.
+If `MAL_CLIENT_ID` is missing, the bot still runs using **Jikan** (unofficial MyAnimeList mirror — same MAL IDs and `myanimelist.net` links).
 
 ---
 
@@ -268,12 +268,15 @@ Keep the terminal open, or run under a process manager (`pm2`, `nssm`, `systemd`
 Anime / Manga lookup
         │
         ▼
- MyAnimeList API  ──(if no key / error)──►  Jikan  ──►  AniList
+ Official MyAnimeList API  ──(if no key / error)──►  Jikan (MAL data)
+        │
+        ▼
+  Links always → https://myanimelist.net/...
 ```
 
-- **Scores from MAL / Jikan:** out of **10**  
-- **Scores from AniList fallback:** out of **100**  
-- Embed footers show which source was used when available  
+- **Scores:** always out of **10** (MyAnimeList scale)  
+- **No AniList** for anime/manga  
+
 
 ---
 
@@ -301,7 +304,7 @@ Anime / Manga lookup
 ## License & credits
 
 - Built for personal / community Discord servers.
-- Anime & manga metadata © respective rights holders; data via **MyAnimeList**, **Jikan**, and **AniList** APIs.
+- Anime & manga metadata © respective rights holders; data via **MyAnimeList** (official API + Jikan).
 - Memes / quotes come from third-party public APIs used by the bot.
 
 ---
@@ -520,7 +523,7 @@ python bot.py
 2. নতুন API ক্লায়েন্ট/অ্যাপ তৈরি  
 3. **Client ID** কপি → `MAL_CLIENT_ID`  
 
-`MAL_CLIENT_ID` না দিলেও বট চলবে; তখন **Jikan** ও **AniList** ফলব্যাক ব্যবহার করবে।
+`MAL_CLIENT_ID` না দিলেও বট চলবে; তখন **Jikan** (unofficial MyAnimeList) ব্যবহার করবে — লিংক সবসময় `myanimelist.net`।
 
 ---
 
@@ -558,12 +561,15 @@ python bot.py
 অ্যানিমে / মাঙ্গা সার্চ
         │
         ▼
- MyAnimeList API  ──(কী নেই / এরর)──►  Jikan  ──►  AniList
+ Official MyAnimeList API  ──(কী নেই / এরর)──►  Jikan (MAL ডেটা)
+        │
+        ▼
+  লিংক সবসময় → https://myanimelist.net/...
 ```
 
-- **MAL / Jikan স্কোর:** **১০**-এর মধ্যে  
-- **AniList ফলব্যাক স্কোর:** **১০০**-এর মধ্যে  
-- এম্বেড ফুটারে সোর্সের নাম দেখা যায় (যেখানে সেট করা আছে)  
+- **স্কোর:** সবসময় **১০**-এর মধ্যে (MyAnimeList)  
+- অ্যানিমে/মাঙ্গায় **AniList নেই**  
+
 
 ---
 
@@ -590,7 +596,7 @@ python bot.py
 
 ## ক্রেডিট
 
-- অ্যানিমে/মাঙ্গা তথ্য সংশ্লিষ্ট কপিরাইটধারীদের; ডেটা **MyAnimeList**, **Jikan**, **AniList** API থেকে।  
+- অ্যানিমে/মাঙ্গা তথ্য সংশ্লিষ্ট কপিরাইটধারীদের; ডেটা **MyAnimeList** (official + Jikan) থেকে।  
 - মিম/কোট থার্ড-পার্টি পাবলিক API ব্যবহার করে।  
 
 ---

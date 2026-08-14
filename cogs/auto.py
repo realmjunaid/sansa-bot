@@ -1,43 +1,21 @@
 # ============================================
 #   Sansa Bot — Auto Post Cog
-#   Anime/Manga/Memes: Every hour
+#   Anime/Manga: MyAnimeList only | Memes: Reddit
 # ============================================
 
 import discord
 from discord.ext import commands, tasks
-import aiohttp
-import asyncio
 import logging
-import random
-import re
 from datetime import datetime, timezone
 from config import (
     ANIME_CHANNEL_ID,
     MANGA_CHANNEL_ID, MEMES_CHANNEL_ID,
-    COLOR_ANIME, COLOR_MANGA, COLOR_MEMES
+    COLOR_ANIME, COLOR_MANGA,
 )
 from cogs import mal_client
 
 log = logging.getLogger("SansaBot.Auto")
 
-# ── AniList Query ──────────────────────────
-ANIME_QUERY = """
-query ($page: Int) {
-  Page(page: $page, perPage: 1) {
-    media(type: ANIME, sort: POPULARITY_DESC, status: FINISHED) {
-      id
-      title { romaji english }
-      description(asHtml: false)
-      episodes
-      averageScore
-      genres
-      startDate { year }
-      coverImage { extraLarge }
-      siteUrl
-    }
-  }
-}
-"""
 
 class Auto(commands.Cog):
     def __init__(self, bot):
@@ -50,14 +28,13 @@ class Auto(commands.Cog):
         self.auto_anime.start()
         self.auto_manga.start()
         self.auto_memes.start()
-        log.info("✅ Auto Cog loaded")
+        log.info("✅ Auto Cog loaded (MAL-only anime/manga)")
 
     def cog_unload(self):
         self.auto_anime.cancel()
         self.auto_manga.cancel()
         self.auto_memes.cancel()
 
-    # ── Daily Count Reset ──────────────────
     def check_reset(self):
         today = datetime.now(timezone.utc).date()
         if today != self.last_reset:
@@ -66,92 +43,50 @@ class Auto(commands.Cog):
             self.memes_count_today = 0
             self.last_reset = today
 
-    # ── Anime Fetch (MAL → Jikan → AniList) ───────────────────────
+    # ── Anime (MyAnimeList only) ───────────
     async def fetch_random_anime(self):
-        # Primary: official MyAnimeList API
         mal = await mal_client.random_anime()
-        if mal:
-            genres = [g.get("name") if isinstance(g, dict) else g for g in mal.get("genres", [])]
-            img = (mal.get("images") or {}).get("jpg", {}).get("large_image_url") or ""
-            return {
-                "title": {
-                    "romaji": mal.get("title", ""),
-                    "english": mal.get("title_english") or mal.get("title", "")
-                },
-                "description": mal.get("synopsis", ""),
-                "episodes": mal.get("episodes"),
-                "averageScore": mal.get("score"),
-                "genres": genres,
-                "startDate": {"year": mal.get("year")},
-                "coverImage": {"extraLarge": img},
-                "siteUrl": f"https://myanimelist.net/anime/{mal.get('mal_id')}",
-                "_score_out_of": 10,
-            }
+        if not mal:
+            return None
+        genres = [g.get("name") if isinstance(g, dict) else g for g in mal.get("genres", [])]
+        img = (mal.get("images") or {}).get("jpg", {}).get("large_image_url") or ""
+        return {
+            "title": {
+                "romaji": mal.get("title", ""),
+                "english": mal.get("title_english") or mal.get("title", ""),
+            },
+            "description": mal.get("synopsis", ""),
+            "episodes": mal.get("episodes"),
+            "averageScore": mal.get("score"),
+            "genres": genres,
+            "startDate": {"year": mal.get("year")},
+            "coverImage": {"extraLarge": img},
+            "siteUrl": mal.get("site_url")
+            or f"https://myanimelist.net/anime/{mal.get('mal_id')}",
+        }
 
-        # Fallback: Jikan
-        try:
-            async with aiohttp.ClientSession(headers={"User-Agent": "SansaBot/1.0"}) as session:
-                async with session.get("https://api.jikan.moe/v4/random/anime", timeout=10) as resp:
-                    if resp.status == 200:
-                        data = await resp.json()
-                        anime = data.get("data")
-                        if anime:
-                            return {
-                                "title": {
-                                    "romaji": anime.get("title", ""),
-                                    "english": anime.get("title_english") or anime.get("title", "")
-                                },
-                                "description": anime.get("synopsis", ""),
-                                "episodes": anime.get("episodes"),
-                                "averageScore": anime.get("score"),
-                                "genres": [g.get("name") for g in anime.get("genres", [])],
-                                "startDate": {"year": anime.get("year")},
-                                "coverImage": {"extraLarge": anime.get("images", {}).get("jpg", {}).get("large_image_url") or anime.get("images", {}).get("jpg", {}).get("image_url")},
-                                "siteUrl": f"https://myanimelist.net/anime/{anime.get('mal_id')}",
-                                "_score_out_of": 10,
-                            }
-        except Exception as e:
-            log.warning(f"Jikan failed — falling back to AniList: {e}")
-
-        # Fallback: AniList
-        try:
-            page = random.randint(1, 50)
-            async with aiohttp.ClientSession() as session:
-                async with session.post(
-                    "https://graphql.anilist.co",
-                    json={"query": ANIME_QUERY, "variables": {"page": page}},
-                    headers={"Content-Type": "application/json"}
-                ) as resp:
-                    if resp.status == 200:
-                        data = await resp.json()
-                        media_list = data["data"]["Page"]["media"]
-                        if media_list:
-                            m = media_list[0]
-                            m["_score_out_of"] = 100
-                            return m
-        except Exception as e:
-            log.error(f"AniList fallback also failed: {e}")
-        return None
-
-    # ── Auto Anime (প্রতি ঘণ্টায় - 24 টা) ───
     @tasks.loop(hours=1)
     async def auto_anime(self):
         await self.bot.wait_until_ready()
         self.check_reset()
 
+        if not ANIME_CHANNEL_ID:
+            log.error("❌ ANIME_CHANNEL_ID is 0")
+            return
         channel = self.bot.get_channel(ANIME_CHANNEL_ID)
         if not channel:
-            log.error("❌ Anime channel not found!")
+            log.error(f"❌ Anime channel not found (id={ANIME_CHANNEL_ID})")
             return
 
         anime = await self.fetch_random_anime()
         if not anime:
+            log.warning("⚠️ Auto anime: MAL fetch failed")
             return
 
         self.anime_count_today += 1
 
-        desc = anime.get("description", "No description available.")
-        if desc and len(desc) > 300:
+        desc = anime.get("description") or "No description available."
+        if len(desc) > 300:
             desc = desc[:300] + "..."
 
         genres = ", ".join(anime.get("genres", [])[:4]) or "Unknown"
@@ -162,106 +97,140 @@ class Auto(commands.Cog):
             title=f"🎌 {title_en}",
             description=f"*{title_jp}*\n\n{desc}",
             color=COLOR_ANIME,
-            url=anime.get("siteUrl", ""),
-            timestamp=datetime.now(timezone.utc)
+            url=anime.get("siteUrl") or None,
+            timestamp=datetime.now(timezone.utc),
         )
-        score_max = anime.get("_score_out_of", 100)
-        embed.add_field(name="⭐ Score", value=f"{anime.get('averageScore', 'N/A')}/{score_max}", inline=True)
+        embed.add_field(name="⭐ Score", value=f"{anime.get('averageScore', 'N/A')}/10", inline=True)
         embed.add_field(name="📺 Episodes", value=str(anime.get("episodes", "N/A")), inline=True)
-        embed.add_field(name="📅 Year", value=str(anime.get("startDate", {}).get("year", "N/A")), inline=True)
+        embed.add_field(
+            name="📅 Year",
+            value=str(anime.get("startDate", {}).get("year", "N/A")),
+            inline=True,
+        )
         embed.add_field(name="🎭 Genres", value=genres, inline=False)
         cover = anime.get("coverImage") or {}
         if cover.get("extraLarge"):
             embed.set_image(url=cover["extraLarge"])
-        embed.set_footer(text="Sansa Bot • MyAnimeList" if score_max == 10 else "Sansa Bot • AniList")
+        embed.set_footer(text="Sansa Bot • MyAnimeList")
 
-        await channel.send(embed=embed)
-        log.info(f"✅ Auto anime posted ({self.anime_count_today}/24)")
+        try:
+            await channel.send(embed=embed)
+            log.info(f"✅ Auto anime posted ({self.anime_count_today}/24)")
+        except Exception as e:
+            log.error(f"❌ Auto anime send failed: {e}")
 
     @auto_anime.before_loop
     async def before_auto_anime(self):
         await self.bot.wait_until_ready()
 
-    # ── Auto Manga (প্রতি ঘণ্টায়) ─────────
+    # ── Manga (MyAnimeList only) ───────────
     @tasks.loop(hours=1)
     async def auto_manga(self):
         await self.bot.wait_until_ready()
         self.check_reset()
 
+        if not MANGA_CHANNEL_ID:
+            log.error("❌ MANGA_CHANNEL_ID is 0")
+            return
         channel = self.bot.get_channel(MANGA_CHANNEL_ID)
         if not channel:
+            log.error(f"❌ Manga channel not found (id={MANGA_CHANNEL_ID})")
             return
 
         manga_cog = self.bot.get_cog("Manga")
-        if not manga_cog:
-            return
-
-        manga = await manga_cog.fetch_random_manga()
+        manga = await (manga_cog.fetch_random_manga() if manga_cog else mal_client.random_manga())
         if not manga:
+            log.warning("⚠️ Auto manga: MAL fetch failed")
             return
 
         self.manga_count_today += 1
 
-        desc = manga.get("description", "No description available.")
-        if desc and len(desc) > 300:
+        desc = manga.get("description") or manga.get("synopsis") or "No description available."
+        if len(desc) > 300:
             desc = desc[:300] + "..."
 
-        genres = ", ".join(manga.get("genres", [])[:4]) or "Unknown"
-        title_en = manga["title"].get("english") or manga["title"].get("romaji", "Unknown")
-        title_jp = manga["title"].get("romaji", "")
+        genres_raw = manga.get("genres") or []
+        if genres_raw and isinstance(genres_raw[0], dict):
+            genres = ", ".join([g.get("name", "") for g in genres_raw][:4]) or "Unknown"
+        else:
+            genres = ", ".join(str(g) for g in genres_raw[:4]) or "Unknown"
+
+        title_obj = manga.get("title")
+        if isinstance(title_obj, dict):
+            title_en = title_obj.get("english") or title_obj.get("romaji", "Unknown")
+            title_jp = title_obj.get("romaji", "")
+        else:
+            title_en = manga.get("title_english") or title_obj or "Unknown"
+            title_jp = title_obj or ""
 
         embed = discord.Embed(
             title=f"📚 {title_en}",
             description=f"*{title_jp}*\n\n{desc}",
             color=COLOR_MANGA,
-            url=manga.get("siteUrl", ""),
-            timestamp=datetime.now(timezone.utc)
+            url=manga.get("siteUrl") or manga.get("site_url") or None,
+            timestamp=datetime.now(timezone.utc),
         )
-        score_max = 10 if manga.get("_source") == "mal" or manga.get("mal_id") else 100
         score_val = manga.get("averageScore", manga.get("score", "N/A"))
-        embed.add_field(name="⭐ Score", value=f"{score_val}/{score_max}", inline=True)
+        embed.add_field(name="⭐ Score", value=f"{score_val}/10", inline=True)
         embed.add_field(name="📖 Chapters", value=str(manga.get("chapters", "N/A")), inline=True)
         embed.add_field(name="📦 Volumes", value=str(manga.get("volumes", "N/A")), inline=True)
-        year = manga.get("startDate", {}).get("year") if isinstance(manga.get("startDate"), dict) else manga.get("year", "N/A")
+        year = (
+            manga.get("startDate", {}).get("year")
+            if isinstance(manga.get("startDate"), dict)
+            else manga.get("year", "N/A")
+        )
         embed.add_field(name="📅 Year", value=str(year if year is not None else "N/A"), inline=True)
         embed.add_field(name="🎭 Genres", value=genres, inline=False)
         cover = manga.get("coverImage") or {}
         img = cover.get("extraLarge") or cover.get("large")
         if img:
             embed.set_image(url=img)
-        embed.set_footer(text="Sansa Bot • MyAnimeList" if score_max == 10 else "Sansa Bot • AniList")
+        embed.set_footer(text="Sansa Bot • MyAnimeList")
 
-        await channel.send(embed=embed)
-        log.info(f"✅ Auto manga posted ({self.manga_count_today}/24)")
+        try:
+            await channel.send(embed=embed)
+            log.info(f"✅ Auto manga posted ({self.manga_count_today}/24)")
+        except Exception as e:
+            log.error(f"❌ Auto manga send failed: {e}")
 
     @auto_manga.before_loop
     async def before_auto_manga(self):
         await self.bot.wait_until_ready()
 
-    # ── Auto Memes (প্রতি ঘণ্টায়) ─────────
+    # ── Memes ──────────────────────────────
     @tasks.loop(hours=1)
     async def auto_memes(self):
         await self.bot.wait_until_ready()
         self.check_reset()
 
+        if not MEMES_CHANNEL_ID:
+            log.error("❌ MEMES_CHANNEL_ID is 0 — set it in .env")
+            return
+
         channel = self.bot.get_channel(MEMES_CHANNEL_ID)
         if not channel:
+            log.error(f"❌ Memes channel not found (id={MEMES_CHANNEL_ID})")
             return
 
         memes_cog = self.bot.get_cog("Memes")
         if not memes_cog:
+            log.error("❌ Memes cog not loaded — cannot auto-post memes")
             return
 
         meme = await memes_cog.fetch_meme("hot")
         if not meme:
+            log.warning("⚠️ Auto memes: fetch failed this hour")
             return
 
         self.memes_count_today += 1
 
-        embed = memes_cog.build_embed(meme, "🔥 Auto Meme")
-        embed.set_footer(text=f"Sansa Bot • Auto Memes • {self.memes_count_today}/24")
-        await channel.send(embed=embed)
-        log.info(f"✅ Auto memes posted ({self.memes_count_today}/24)")
+        try:
+            embed = memes_cog.build_embed(meme, "🔥 Auto Meme")
+            embed.set_footer(text=f"Sansa Bot • Auto Memes • {self.memes_count_today}/24")
+            await channel.send(embed=embed)
+            log.info(f"✅ Auto memes posted ({self.memes_count_today}/24)")
+        except Exception as e:
+            log.error(f"❌ Auto memes send failed: {e}")
 
     @auto_memes.before_loop
     async def before_auto_memes(self):
